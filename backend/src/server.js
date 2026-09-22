@@ -60,11 +60,20 @@ app.get('/api/health', (req, res) => res.json({
   timestamp: new Date()
 }));
 
+const fs   = require('fs');
+
 // ── Serve frontend static build in production ─────────────────────────────
 if (PROD) {
-  const distPath = path.join(__dirname, '../../frontend/dist');
-  app.use(express.static(distPath));
-  app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
+  let distPath = path.join(__dirname, '../../frontend/dist');
+  if (!fs.existsSync(distPath)) {
+    distPath = path.join(process.cwd(), 'frontend/dist');
+  }
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
+  } else {
+    console.warn('[Server] Warning: Frontend dist path not found at', distPath);
+  }
 }
 
 // ── Centralised error handler — must be last ──────────────────────────────
