@@ -1,0 +1,410 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════
+   ETL OBSERVABILITY — Single Soft Light Theme System
+   Unified Muted Lavender-Gray & #DDA0DD Plum Accents
+ ═══════════════════════════════════════════════════════════════════ */
+
+:root, [data-theme="soft-light"], [data-theme="light"] {
+  --bg-main: #ece8f2;
+  --bg-card: #faf8fc;
+  --bg-card-hover: #ebe3f2;
+  --bg-sidebar: #e1d8eb;
+  --bg-navbar: #f3eff8;
+  --bg-input: #ffffff;
+  --bg-subtle: #ece5f4;
+  --text-main: #221c2e;
+  --text-secondary: #4d455c;
+  --text-muted: #736b85;
+  --border-color: #d1c9de;
+  --border-subtle: #e4deee;
+  --primary: #DDA0DD;
+  --primary-hover: #c882c8;
+  --primary-light: #ebe0ed;
+  --primary-text: #2c122c;
+  --success: #15803d;
+  --success-bg: #e6f4ea;
+  --success-border: #b7e1cd;
+  --warning: #b45309;
+  --warning-bg: #fef3c7;
+  --warning-border: #fde68a;
+  --error: #b91c1c;
+  --error-bg: #fee2e2;
+  --error-border: #fca5a5;
+  --chart-grid: #d1c9de;
+}
+
+
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 13.5px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar          { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track    { background: transparent; }
+  ::-webkit-scrollbar-thumb    { background: var(--border-color); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  ::-webkit-scrollbar-corner   { background: transparent; }
+
+  ::selection { background: var(--primary-light); color: var(--primary); }
+
+  a { color: inherit; text-decoration: none; }
+}
+
+@layer utilities {
+
+  /* ──────────────────────────────────────────────
+     SURFACES
+  ────────────────────────────────────────────── */
+
+  /* Main content card */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    transition: border-color 0.15s, background-color 0.2s ease;
+  }
+  .card:hover {
+    border-color: var(--border-color);
+  }
+
+  /* Flat inset surface (inner panels, table heads) */
+  .card-flat {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+  }
+
+  /* Elevated floating surface (dropdowns, popovers) */
+  .card-elevated {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ──────────────────────────────────────────────
+     SIDEBAR
+  ────────────────────────────────────────────── */
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 11px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.14s, color 0.14s;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid transparent;
+  }
+  .sidebar-item:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-main);
+  }
+  .sidebar-item.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-color: var(--primary-light);
+    font-weight: 600;
+  }
+  .sidebar-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 15%; bottom: 15%;
+    width: 3px;
+    background: var(--primary);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .sidebar-section {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 14px 10px 5px;
+  }
+
+  /* ──────────────────────────────────────────────
+     BUTTONS
+  ────────────────────────────────────────────── */
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--primary);
+    color: var(--primary-text);
+    border: 1px solid var(--primary-hover);
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    transition: background 0.15s, border-color 0.15s;
+    font-family: inherit;
+  }
+  .btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    background: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn-secondary:hover {
+    border-color: var(--text-muted);
+    background: var(--bg-card-hover);
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.14s;
+    font-family: inherit;
+  }
+  .btn-ghost:hover { background: var(--bg-card-hover); color: var(--text-main); }
+
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid var(--error-border);
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn-danger:hover { opacity: 0.9; }
+
+  /* ──────────────────────────────────────────────
+     STATUS BADGES
+  ────────────────────────────────────────────── */
+
+  .badge-base {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .badge-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .badge-running {
+    background: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+  }
+  .badge-running .badge-dot { background: var(--primary); }
+
+  .badge-success {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid var(--success-border);
+  }
+  .badge-success .badge-dot { background: var(--success); }
+
+  .badge-failed {
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid var(--error-border);
+  }
+  .badge-failed .badge-dot { background: var(--error); }
+
+  .badge-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid var(--warning-border);
+  }
+  .badge-warning .badge-dot { background: var(--warning); }
+
+  .badge-pending {
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+  }
+  .badge-pending .badge-dot { background: var(--text-muted); }
+
+  /* ──────────────────────────────────────────────
+     INPUT
+  ────────────────────────────────────────────── */
+
+  .input {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    color: var(--text-main);
+    font-size: 13px;
+    font-family: inherit;
+    padding: 7px 11px;
+    transition: border-color 0.16s, box-shadow 0.16s;
+    outline: none;
+    display: block;
+  }
+  .input::placeholder { color: var(--text-muted); }
+  .input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
+
+  /* ──────────────────────────────────────────────
+     TABLE
+  ────────────────────────────────────────────── */
+
+  .table-row {
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background 0.13s;
+  }
+  .table-row:last-child { border-bottom: none; }
+  .table-row:hover { background: var(--bg-card-hover); }
+
+  .table-th {
+    padding: 9px 14px;
+    text-align: left;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: var(--bg-subtle);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+  }
+
+  .table-td {
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--text-main);
+    vertical-align: middle;
+  }
+
+  /* ──────────────────────────────────────────────
+     SKELETON & UTILITIES
+  ────────────────────────────────────────────── */
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg-subtle) 25%, var(--border-color) 50%, var(--bg-subtle) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-wave 1.6s ease-in-out infinite;
+    border-radius: 4px;
+  }
+  @keyframes skeleton-wave {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .progress-track {
+    height: 6px;
+    background: var(--border-subtle);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease-out;
+  }
+
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Animated 3 dots thinking indicator (...) */
+  .thinking-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .thinking-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+    animation: dotPulse 1.4s infinite ease-in-out both;
+  }
+  .thinking-dot:nth-child(1) { animation-delay: -0.32s; }
+  .thinking-dot:nth-child(2) { animation-delay: -0.16s; }
+  .thinking-dot:nth-child(3) { animation-delay: 0s; }
+
+  @keyframes dotPulse {
+    0%, 80%, 100% {
+      opacity: 0.25;
+      transform: scale(0.75);
+    }
+    40% {
+      opacity: 1;
+      transform: scale(1.3);
+    }
+  }
+
+  .pulse-mic {
+    animation: micPulse 1.2s infinite ease-in-out;
+  }
+  @keyframes micPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.15); }
+  }
+}
+
