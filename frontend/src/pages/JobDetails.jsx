@@ -6,7 +6,7 @@ import RiskScore from '../components/ui/RiskScore';
 import Skeleton from '../components/ui/Skeleton';
 import api from '../utils/api';
 import { formatDuration, formatDate, formatNumber, getRiskColor } from '../utils/helpers';
-import { ArrowLeft, RefreshCw, AlertTriangle, CheckCircle, Cpu, HardDrive, Clock, Database, RotateCcw, Zap, Search, FileX, Wifi, Lock, Activity, RefreshCcw, History, Brain, ShieldX, ShieldAlert, ShieldCheck, TrendingUp, GitBranch, CheckCircle2, XCircle, Loader2, SkipForward, HelpCircle } from 'lucide-react';
+import { ArrowLeft, RefreshCw, AlertTriangle, CheckCircle, Cpu, HardDrive, Clock, Database, RotateCcw, Zap, Search, FileX, Wifi, Lock, Activity, RefreshCcw, History, Brain, ShieldX, ShieldAlert, ShieldCheck, TrendingUp, GitBranch, CheckCircle2, XCircle, Loader2, SkipForward, HelpCircle, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 /* ── task state helpers (mirrors Monitoring page) ───────────────────── */
@@ -113,6 +113,261 @@ function FeatureBar({ label, value, points, max, color }) {
       </div>
       <div style={{ height: 5, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 3, transition: 'width 0.5s' }} />
+      </div>
+    </div>
+  );
+}
+
+/* ── job descriptions dictionary ───────────────────────────────────────── */
+const JOB_DESCRIPTIONS = {
+  'Customer Data Sync': 'Synchronizes customer profiles and metadata across operational databases to ensure unified user identity and up-to-date CRM records.',
+  'Sales Pipeline ETL': 'Extracts daily transaction data, cleanses sales metrics, and loads into the warehouse to power real-time sales reporting and executive dashboards.',
+  'Inventory Aggregation': 'Consolidates hourly stock movements and warehouse inventory counts to prevent stockouts and inform automated reordering.',
+  'Log Ingestion': 'Ingests raw system logs and application telemetry into central log storage for real-time error tracking and audit compliance.',
+  'User Events Pipeline': 'Streams live user interaction events to analytics storage to power behavioral analytics, journey tracking, and recommendation engines.',
+  'Financial Reports ETL': 'Aggregates end-of-day ledger entries and revenue balances to ensure audit compliance and accurate financial statements.',
+  'Product Catalog Sync': 'Syncs product catalog definitions, pricing, and inventory availability across storefronts to keep checkout details consistent.',
+  'Order Processing': 'Extracts completed orders, calculates totals, and dispatches records to fulfillment services for prompt delivery and billing.',
+  'Analytics Warehouse Load': 'Transforms raw operational records and loads facts and dimensions into the data warehouse for cross-department reporting.',
+  'ML Feature Pipeline': 'Computes machine learning feature sets from pipeline telemetry to train failure prediction and anomaly detection models.',
+  'Compliance Data Export': 'Generates encrypted data exports for regulatory audits to enforce data privacy policies and compliance standards.',
+  'Real-time CDC': 'Captures change-data-capture logs from source databases in real time to maintain low-latency analytics replicas.',
+  'Inventory Stream ETL': 'Streams live inventory adjustments and warehouse stock counts to prevent overselling and support automated replenishment.',
+  'Financial Reconciliation': 'Reconciles payment gateway receipts against accounting ledgers to identify discrepancies and prevent revenue leakage.',
+  'Customer 360 Sync': 'Consolidates customer activity across sales, support, and web telemetry into a unified 360-degree profile for analytics.',
+  'User Behavior Logs': 'Ingests and structures user activity logs to enable product engagement analytics and behavioral segmentation.',
+  'Sales Analytics ETL': 'Aggregates regional sales figures and order totals to feed real-time sales performance dashboards.',
+};
+
+function getJobDescription(job) {
+  if (!job) return '';
+  if (job.description) return job.description;
+  if (JOB_DESCRIPTIONS[job.jobName]) return JOB_DESCRIPTIONS[job.jobName];
+
+  const name = (job.jobName || '').toLowerCase();
+  if (name.includes('sales')) return 'Extracts and aggregates sales transaction metrics to feed reporting dashboards and revenue analytics.';
+  if (name.includes('inventory') || name.includes('stock')) return 'Consolidates warehouse inventory counts and stock updates to maintain accurate supply chain records.';
+  if (name.includes('financial') || name.includes('reconcil')) return 'Reconciles transaction ledgers and financial records to verify billing accuracy and audit compliance.';
+  if (name.includes('customer') || name.includes('user')) return 'Synchronizes user profiles and activity logs across data stores to maintain updated customer intelligence.';
+  if (name.includes('log') || name.includes('event')) return 'Ingests and structures system telemetry logs for performance monitoring and error tracking.';
+
+  return `Processes and transforms data records from ${job.source || 'source'} to ${job.destination || 'destination'} to ensure data freshness and pipeline accuracy.`;
+}
+
+/* ── Data Freshness Card Component ───────────────────────────────────── */
+function DataFreshnessCard({ job }) {
+  if (!job) return null;
+  const lastSyncDate = job.endTime || job.lastHeartbeat || job.startTime;
+  const minutesAgo = lastSyncDate ? Math.max(0, Math.floor((new Date() - new Date(lastSyncDate)) / 60000)) : null;
+
+  let freshStatus = { label: 'Unknown', color: '#64748b', bg: 'rgba(100,116,139,0.1)' };
+  if (job.status === 'running') {
+    freshStatus = { label: 'Syncing Live', color: '#2563eb', bg: 'rgba(37,99,235,0.1)' };
+  } else if (job.status === 'failed') {
+    freshStatus = { label: 'Out of Sync (Failed)', color: '#dc2626', bg: 'rgba(220,38,38,0.1)' };
+  } else if (minutesAgo !== null) {
+    if (minutesAgo < 60) {
+      freshStatus = { label: `Fresh (${minutesAgo === 0 ? 'just now' : minutesAgo + 'm ago'})`, color: '#16a34a', bg: 'rgba(22,163,74,0.1)' };
+    } else if (minutesAgo < 360) {
+      const hrs = Math.floor(minutesAgo / 60);
+      freshStatus = { label: `Moderate (${hrs}h ago)`, color: '#d97706', bg: 'rgba(217,119,6,0.1)' };
+    } else {
+      const hrs = Math.floor(minutesAgo / 60);
+      freshStatus = { label: `Stale (${hrs}h ago)`, color: '#dc2626', bg: 'rgba(220,38,38,0.1)' };
+    }
+  }
+
+  return (
+    <div className="card" style={{
+      padding: 16,
+      borderLeft: '4px solid #DDA0DD',
+      background: 'var(--bg-subtle)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Database size={15} color="#DDA0DD" />
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#DDA0DD', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Data Freshness
+          </span>
+        </div>
+        <span style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: freshStatus.color,
+          background: freshStatus.bg,
+          padding: '3px 9px',
+          borderRadius: 12,
+          border: `1px solid ${freshStatus.color}30`
+        }}>
+          {freshStatus.label}
+        </span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, fontSize: 12 }}>
+        <div>
+          <div style={{ color: '#64748b', fontSize: 11, marginBottom: 2 }}>Last Sync Time</div>
+          <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{lastSyncDate ? formatDate(lastSyncDate) : '—'}</div>
+        </div>
+        <div>
+          <div style={{ color: '#64748b', fontSize: 11, marginBottom: 2 }}>Pipeline Target</div>
+          <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{job.source} → {job.destination}</div>
+        </div>
+        <div>
+          <div style={{ color: '#64748b', fontSize: 11, marginBottom: 2 }}>Records Processed</div>
+          <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>{formatNumber(job.recordsProcessed)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Execution Timeline Card Component ───────────────────────────────── */
+function ExecutionTimelineCard({ job }) {
+  if (!job) return null;
+
+  const nodes = [];
+
+  if (job.startTime) {
+    nodes.push({
+      label: 'Pipeline Started',
+      time: formatDate(job.startTime),
+      detail: job.runType ? `Run type: ${job.runType}` : 'Execution initiated',
+      status: 'completed',
+    });
+  }
+
+  if (job.tasks && job.tasks.length > 0) {
+    job.tasks.forEach((t) => {
+      nodes.push({
+        label: t.taskId,
+        time: t.startDate ? formatDate(t.startDate) : (t.duration != null ? `${t.duration}s` : ''),
+        detail: `State: ${t.state} (try #${t.tryNumber})`,
+        status: t.state === 'success' ? 'completed' : t.state === 'failed' ? 'failed' : t.state === 'running' ? 'in_progress' : 'pending',
+      });
+    });
+  } else if (job.logs && job.logs.length > 0) {
+    const keyLogs = job.logs.filter(l => l.level === 'ERROR' || l.level === 'WARN' || l.message.toLowerCase().includes('start') || l.message.toLowerCase().includes('complete') || l.message.toLowerCase().includes('finish')).slice(0, 3);
+    const logsToUse = keyLogs.length > 0 ? keyLogs : job.logs.slice(0, 3);
+    logsToUse.forEach((l) => {
+      nodes.push({
+        label: l.message,
+        time: new Date(l.timestamp).toLocaleTimeString(),
+        detail: `Log level: ${l.level}`,
+        status: l.level === 'ERROR' ? 'failed' : l.level === 'WARN' ? 'warning' : 'completed',
+      });
+    });
+  } else {
+    nodes.push({
+      label: `Extract (${job.source})`,
+      time: job.startTime ? formatDate(job.startTime) : '',
+      detail: 'Data extraction from source',
+      status: 'completed',
+    });
+    nodes.push({
+      label: 'Transform',
+      time: job.duration ? `${Math.round(job.duration * 0.4)}s` : '',
+      detail: `Processed ${formatNumber(job.recordsProcessed)} records`,
+      status: job.status === 'failed' ? 'failed' : job.status === 'running' ? 'in_progress' : 'completed',
+    });
+    nodes.push({
+      label: `Load (${job.destination})`,
+      time: job.endTime ? formatDate(job.endTime) : '',
+      detail: 'Data load into warehouse',
+      status: job.status === 'success' ? 'completed' : job.status === 'failed' ? 'failed' : job.status === 'running' ? 'in_progress' : 'pending',
+    });
+  }
+
+  if (job.endTime) {
+    nodes.push({
+      label: job.status === 'success' ? 'Pipeline Completed' : job.status === 'failed' ? 'Pipeline Failed' : 'Pipeline Ended',
+      time: formatDate(job.endTime),
+      detail: `Total Duration: ${formatDuration(job.duration)}`,
+      status: job.status === 'success' ? 'completed' : job.status === 'failed' ? 'failed' : 'completed',
+    });
+  } else if (job.status === 'running') {
+    nodes.push({
+      label: 'Execution in Progress',
+      time: 'Now',
+      detail: 'Processing continuous stream',
+      status: 'in_progress',
+    });
+  }
+
+  const getNodeColor = (status) => {
+    switch (status) {
+      case 'completed': return '#16a34a';
+      case 'failed': return '#dc2626';
+      case 'warning': return '#d97706';
+      case 'in_progress': return '#2563eb';
+      default: return '#64748b';
+    }
+  };
+
+  return (
+    <div className="card" style={{
+      padding: 16,
+      borderLeft: '4px solid #DDA0DD',
+      background: 'var(--bg-subtle)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Clock size={15} color="#DDA0DD" />
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#DDA0DD', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          Execution Timeline
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, position: 'relative', paddingLeft: 16 }}>
+        <div style={{
+          position: 'absolute',
+          left: 5,
+          top: 6,
+          bottom: 6,
+          width: 2,
+          background: 'rgba(221, 160, 221, 0.25)',
+          borderRadius: 1
+        }} />
+
+        {nodes.map((node, i) => {
+          const color = getNodeColor(node.status);
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, position: 'relative' }}>
+              <div style={{
+                position: 'absolute',
+                left: -16,
+                top: 4,
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                background: color,
+                border: '2px solid var(--bg-subtle)',
+                boxShadow: `0 0 0 2px ${color}30`
+              }} />
+
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-main)' }}>
+                  {node.label}
+                </div>
+                {node.detail && (
+                  <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>
+                    {node.detail}
+                  </div>
+                )}
+              </div>
+
+              {node.time && (
+                <div style={{ fontSize: 11, color: '#64748b', whiteSpace: 'nowrap', textAlign: 'right' }}>
+                  {node.time}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -263,6 +518,27 @@ export default function JobDetails() {
           </div>
         </div>
 
+        {/* ── Job Description Banner ── */}
+        <div className="card" style={{
+          padding: '12px 16px',
+          borderLeft: '4px solid #DDA0DD',
+          background: 'var(--bg-subtle)',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12,
+          borderRadius: '6px'
+        }}>
+          <Info size={16} color="#DDA0DD" style={{ marginTop: 2, flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#DDA0DD', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>
+              Job Description
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-main)', lineHeight: 1.5 }}>
+              {getJobDescription(job)}
+            </div>
+          </div>
+        </div>
+
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #1e2535', paddingBottom: 0 }}>
           {tabs.map(tab => (
@@ -293,6 +569,12 @@ export default function JobDetails() {
                   <div style={{ fontSize: 18, fontWeight: 700, color }}>{value}</div>
                 </div>
               ))}
+            </div>
+
+            {/* ── Data Freshness & Execution Timeline ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+              <DataFreshnessCard job={job} />
+              <ExecutionTimelineCard job={job} />
             </div>
 
             {/* ── Airflow DAG metadata + task pipeline ── */}
