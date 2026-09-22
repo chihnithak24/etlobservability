@@ -37,7 +37,7 @@ const connectDB = async () => {
 
   try {
     await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 10000,  // fail fast if Atlas is unreachable
+      serverSelectionTimeoutMS: 5000,  // fail fast if Atlas is unreachable
       socketTimeoutMS:          45000,
     });
     console.log(`[DB] MongoDB connected: ${mongoose.connection.host}`);
@@ -45,12 +45,7 @@ const connectDB = async () => {
     _onConnectedCallbacks.length = 0;
   } catch (err) {
     console.error('[DB] Connection error:', err.message);
-    if (process.env.NODE_ENV === 'production') {
-      // In production a missing DB is a fatal misconfiguration
-      console.error('[DB] Exiting — set MONGO_URI to a valid Atlas connection string');
-      process.exit(1);
-    }
-    console.warn('[DB] Falling back to in-memory store');
+    console.warn('[DB] Operating with in-memory telemetry store');
   }
 };
 

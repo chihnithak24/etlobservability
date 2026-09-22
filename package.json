@@ -1,0 +1,14 @@
+{
+  "name": "etl-observability-system",
+  "version": "1.0.0",
+  "description": "ETL Predict AI Observability & Telemetry System",
+  "private": true,
+  "main": "backend/src/server.js",
+  "scripts": {
+    "build": "npm install --prefix frontend && npm run build --prefix frontend && npm install --prefix backend",
+    "start": "node backend/src/server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
