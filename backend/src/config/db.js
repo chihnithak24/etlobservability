@@ -18,6 +18,12 @@ const onConnected = (fn) => {
 const connectDB = async () => {
   let uri = process.env.MONGO_URI;
 
+  // In production, ignore localhost MONGO_URI because localhost MongoDB does not exist on cloud servers like Render
+  if (process.env.NODE_ENV === 'production' && uri && (uri.includes('localhost') || uri.includes('127.0.0.1') || uri.includes('::1'))) {
+    console.log('[DB] Cloud production mode — ignoring localhost MONGO_URI');
+    uri = null;
+  }
+
   // No URI → start an embedded MongoDB so the app still uses a real DB
   if (!uri) {
     try {
@@ -28,9 +34,9 @@ const connectDB = async () => {
       process.env.MONGO_URI = uri;
       // signal to the rest of the app that seeding should run by default
       if (!process.env.SEED_DB) process.env.SEED_DB = 'true';
-      console.log('[DB] Started embedded MongoDB for local development');
+      console.log('[DB] Started embedded MongoDB instance');
     } catch (err) {
-      console.warn('[DB] Failed to start embedded MongoDB — falling back to in-memory JS store', err.message);
+      console.warn('[DB] Embedded MongoDB fallback note:', err.message);
       return;
     }
   }
@@ -44,8 +50,7 @@ const connectDB = async () => {
     _onConnectedCallbacks.forEach(fn => { try { fn(); } catch (_) {} });
     _onConnectedCallbacks.length = 0;
   } catch (err) {
-    console.error('[DB] Connection error:', err.message);
-    console.warn('[DB] Operating with in-memory telemetry store');
+    console.warn('[DB] Operating with in-memory telemetry store:', err.message);
   }
 };
 
