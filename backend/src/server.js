@@ -129,8 +129,29 @@ candidateDistDirs.forEach(dir => {
   if (fs.existsSync(dir) && !mountedStatic.has(dir)) {
     mountedStatic.add(dir);
     console.log('[Server] Serving static frontend build from:', dir);
-    app.use(express.static(dir, { index: false, maxAge: '1h' }));
+    app.use(express.static(dir, {
+      index: 'index.html',
+      maxAge: '1d',
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+      }
+    }));
   }
+});
+
+// Explicit root route handler — ensures index.html is served immediately
+app.get('/', (req, res, next) => {
+  const dist = getDistPath();
+  if (dist) {
+    const indexPath = path.join(dist, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      return res.sendFile(indexPath);
+    }
+  }
+  next();
 });
 
 // Dynamic static resolver — serves any static asset that exists

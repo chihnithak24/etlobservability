@@ -1,0 +1,38 @@
+services:
+  # ── Unified Full-Stack Service (Backend Express API + React Frontend) ───────
+  - type: web
+    name: etlobservability-2
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ETL_MONITOR_MODE
+        value: simulator
+      - key: MONGO_URI
+        sync: false
+
+  # ── Dedicated Frontend Static Site (Optional standalone frontend) ──────────
+  - type: web
+    name: etlobservability-frontend
+    runtime: static
+    plan: free
+    region: oregon
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://etlobservability-2.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
