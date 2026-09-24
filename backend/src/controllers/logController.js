@@ -114,16 +114,33 @@ const getLogStats = async (req, res) => {
   try {
     if (isConnected()) {
       const EtlLogModel = getEtlLog();
-      const [byLevel, total] = await Promise.all([
-        EtlLogModel.aggregate([{ $group: { _id: '$level', count: { $sum: 1 } } }]),
-        EtlLogModel.countDocuments()
+      const hasEtlLogs  = await EtlLogModel.countDocuments({}, { limit: 1 }) > 0;
+
+      if (hasEtlLogs) {
+        const [byLevel, total] = await Promise.all([
+          EtlLogModel.aggregate([{ $group: { _id: '$level', count: { $sum: 1 } } }]),
+          EtlLogModel.countDocuments()
+        ]);
+        const counts = { INFO: 0, WARN: 0, ERROR: 0, DEBUG: 0 };
+        byLevel.forEach(r => { if (r._id in counts) counts[r._id] = r.count; });
+        return res.json({ total, ...counts });
+      }
+
+      // Fallback: aggregate Job.logs when EtlLog collection has not been seeded
+      const byLevel = await Job.aggregate([
+        { $unwind: '$logs' },
+        { $group: { _id: '$logs.level', count: { $sum: 1 } } }
       ]);
       const counts = { INFO: 0, WARN: 0, ERROR: 0, DEBUG: 0 };
-      byLevel.forEach(r => { if (r._id in counts) counts[r._id] = r.count; });
+      let total = 0;
+      byLevel.forEach(r => {
+        if (r._id in counts) counts[r._id] = r.count;
+        total += r.count;
+      });
       return res.json({ total, ...counts });
     }
 
-    // in-memory
+    // in-memory fallback
     const counts = { INFO: 0, WARN: 0, ERROR: 0, DEBUG: 0 };
     for (const job of getStore()) {
       for (const log of (job.logs || [])) if (log.level in counts) counts[log.level]++;

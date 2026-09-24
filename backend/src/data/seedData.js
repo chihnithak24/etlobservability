@@ -84,6 +84,12 @@ const seedDB = async () => {
     const User  = require('../models/User');
     const bcrypt = require('bcryptjs');
 
+    try {
+      await Job.syncIndexes();
+    } catch (e) {
+      console.warn('[Seed] Index sync note:', e.message);
+    }
+
     const userCount = await User.countDocuments();
     if (userCount === 0) {
       await User.insertMany([

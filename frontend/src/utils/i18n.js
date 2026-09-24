@@ -200,35 +200,62 @@ export const translateDynamicText = (text, targetLang = 'en') => {
 export const speakText = (text, lang = 'en', onStart = () => {}, onEnd = () => {}, onError = () => {}) => {
   if (!('speechSynthesis' in window)) {
     console.warn('Speech synthesis not supported');
-    onError('Speech synthesis not supported');
+    onError('Speech synthesis is not supported in your browser.');
     return null;
   }
 
-  window.speechSynthesis.cancel(); // Stop any active speech
+  window.speechSynthesis.cancel(); // Reset active speech
 
-  const cleanText = text.replace(/[*_#`]/g, '').trim();
+  const cleanText = text
+    .replace(/[*_#`~]/g, '')
+    .replace(/•/g, '')
+    .replace(/https?:\/\/\S+/g, '')
+    .trim();
+
+  if (!cleanText) {
+    onEnd();
+    return null;
+  }
+
   const utterance = new SpeechSynthesisUtterance(cleanText);
-
   const langMap = { en: 'en-US', hi: 'hi-IN', te: 'te-IN' };
   const targetLangCode = langMap[lang] || 'en-US';
   utterance.lang = targetLangCode;
-  utterance.rate = 0.92; // Clear natural speed
+  utterance.rate = 0.95;
 
-  // Find matching voice if available
-  const voices = window.speechSynthesis.getVoices();
-  const matched = voices.find(v => v.lang.replace('_', '-').toLowerCase().startsWith(targetLangCode.toLowerCase()) || v.lang.startsWith(lang));
-  if (matched) {
-    utterance.voice = matched;
-  }
+  const setVoiceAndSpeak = () => {
+    const voices = window.speechSynthesis.getVoices();
+    const matched = voices.find(v =>
+      v.lang.replace('_', '-').toLowerCase().startsWith(targetLangCode.toLowerCase()) ||
+      v.lang.toLowerCase().startsWith(lang.toLowerCase())
+    );
+    if (matched) utterance.voice = matched;
 
-  utterance.onstart = onStart;
-  utterance.onend = onEnd;
-  utterance.onerror = (e) => {
-    console.warn('Speech synthesis error:', e);
-    onError(e);
+    utterance.onstart = onStart;
+    utterance.onend = onEnd;
+    utterance.onerror = (e) => {
+      console.warn('Speech synthesis error:', e);
+      if (e.error !== 'interrupted' && e.error !== 'canceled') {
+        onError('Voice playback interrupted or failed.');
+      } else {
+        onEnd();
+      }
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
-  window.speechSynthesis.speak(utterance);
+  if (window.speechSynthesis.getVoices().length > 0) {
+    setVoiceAndSpeak();
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => {
+      setVoiceAndSpeak();
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+    // Fallback if event doesn't trigger quickly
+    setTimeout(setVoiceAndSpeak, 100);
+  }
+
   return utterance;
 };
 
@@ -239,38 +266,55 @@ export const stopSpeech = () => {
 };
 
 /** Speech Recognition (Speech-to-Text / Microphone) */
+const SPEECH_ERROR_MESSAGES = {
+  'no-speech': 'No speech detected. Please speak clearly into your microphone.',
+  'not-allowed': 'Microphone permission denied. Please allow microphone access in browser settings.',
+  'audio-capture': 'No microphone found. Please connect a microphone and try again.',
+  'network': 'Network error during speech recognition. Please check your connection.',
+  'aborted': 'Voice input stopped.',
+  'service-not-allowed': 'Speech recognition service is disabled or blocked in browser settings.',
+};
+
 export const startVoiceRecognition = (lang = 'en', onResult, onError, onEnd) => {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    if (onError) onError('Speech recognition is not supported in this browser. Try Chrome or Edge.');
+    if (onError) onError('Speech recognition is not supported in this browser. Please try Google Chrome or MS Edge.');
     return null;
   }
 
-  const recognition = new SpeechRecognition();
-  const langMap = { en: 'en-US', hi: 'hi-IN', te: 'te-IN' };
-  recognition.lang = langMap[lang] || 'en-US';
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    if (onResult) onResult(transcript);
-  };
-
-  recognition.onerror = (event) => {
-    console.warn('Speech recognition error:', event.error);
-    if (onError) onError(event.error);
-  };
-
-  recognition.onend = () => {
-    if (onEnd) onEnd();
-  };
-
   try {
+    const recognition = new SpeechRecognition();
+    const langMap = { en: 'en-US', hi: 'hi-IN', te: 'te-IN' };
+    recognition.lang = langMap[lang] || 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    let hasResult = false;
+
+    recognition.onresult = (event) => {
+      hasResult = true;
+      const transcript = event.results[0][0].transcript;
+      if (onResult && transcript) onResult(transcript);
+    };
+
+    recognition.onerror = (event) => {
+      console.warn('Speech recognition event error:', event.error);
+      const userFriendlyMsg = SPEECH_ERROR_MESSAGES[event.error] || `Microphone error: ${event.error}`;
+      if (event.error !== 'aborted' && onError) {
+        onError(userFriendlyMsg);
+      }
+    };
+
+    recognition.onend = () => {
+      if (onEnd) onEnd();
+    };
+
     recognition.start();
     return recognition;
   } catch (err) {
-    if (onError) onError(err.message);
+    console.error('Failed to initialize speech recognition:', err);
+    if (onError) onError(`Could not start microphone: ${err.message || err}`);
+    if (onEnd) onEnd();
     return null;
   }
 };

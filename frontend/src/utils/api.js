@@ -1,10 +1,40 @@
 import axios from 'axios';
 
-// In development Vite proxies /api → localhost:5000 so baseURL stays '/api'.
-// In production VITE_API_URL is set to the Render backend URL at build time,
-// e.g. https://etl-predict-api.onrender.com/api
+// Base API URL configuration:
+// - Relative '/api' works out of the box when frontend is served by Express or reverse-proxy
+// - External backend URL can be set via VITE_API_URL (e.g. https://etlobservability-2.onrender.com/api)
+// - In production, accidental localhost/127.0.0.1 URLs are stripped automatically
+let rawBaseURL = import.meta.env.VITE_API_URL || '/api';
+
+if (typeof rawBaseURL === 'string') {
+  rawBaseURL = rawBaseURL.trim().replace(/\/+$/, '');
+
+  // Strip localhost / port 5000 from production bundles
+  if (import.meta.env.PROD && (
+    rawBaseURL.includes('localhost') ||
+    rawBaseURL.includes('127.0.0.1') ||
+    rawBaseURL.includes('0.0.0.0') ||
+    rawBaseURL.includes(':5000')
+  )) {
+    console.warn('[API] Production environment detected localhost backend address. Falling back to same-origin /api.');
+    rawBaseURL = '/api';
+  }
+
+  // If an absolute URL is supplied without /api, ensure /api suffix is appended
+  if (rawBaseURL.startsWith('http://') || rawBaseURL.startsWith('https://')) {
+    if (!rawBaseURL.endsWith('/api')) {
+      rawBaseURL = `${rawBaseURL}/api`;
+    }
+  }
+}
+
+if (!rawBaseURL) {
+  rawBaseURL = '/api';
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: rawBaseURL,
+  timeout: 20000,
 });
 
 api.interceptors.request.use(config => {
@@ -17,9 +47,11 @@ api.interceptors.response.use(
   res => res,
   err => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (!window.location.pathname.startsWith('/login')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login?reason=session_expired';
+      }
     }
     return Promise.reject(err);
   }

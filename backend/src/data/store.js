@@ -2,7 +2,14 @@
 let _jobs = null;
 
 const getStore = () => {
-  if (!_jobs) _jobs = [];
+  if (!_jobs) {
+    try {
+      const { seedJobs } = require('./seedData');
+      _jobs = seedJobs();
+    } catch {
+      _jobs = [];
+    }
+  }
   return _jobs;
 };
 

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -20,7 +20,8 @@ import ErrorBoundary from './components/ui/ErrorBoundary';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/login" replace />;
+  const location = useLocation();
+  return user ? children : <Navigate to="/login" state={{ from: location }} replace />;
 };
 
 function AppRoutes() {
@@ -28,10 +29,15 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/dags" element={<PrivateRoute><Dags /></PrivateRoute>} />
       <Route path="/jobs" element={<PrivateRoute><Jobs /></PrivateRoute>} />
       <Route path="/jobs/:id" element={<PrivateRoute><JobDetails /></PrivateRoute>} />
+      <Route path="/pipelines" element={<PrivateRoute><Jobs /></PrivateRoute>} />
       <Route path="/monitoring" element={<PrivateRoute><Monitoring /></PrivateRoute>} />
+      <Route path="/live-monitor" element={<PrivateRoute><Monitoring /></PrivateRoute>} />
+      <Route path="/live" element={<PrivateRoute><Monitoring /></PrivateRoute>} />
+      <Route path="/monitor" element={<PrivateRoute><Monitoring /></PrivateRoute>} />
       <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
       <Route path="/alerts" element={<PrivateRoute><Alerts /></PrivateRoute>} />
       <Route path="/prediction" element={<PrivateRoute><Prediction /></PrivateRoute>} />
@@ -51,7 +57,14 @@ export default function App() {
         <AuthProvider>
           <BrowserRouter>
             <AppRoutes />
-            <Toaster position="top-right" toastOptions={{ style: { background: 'var(--bg-card)', color: 'var(--text-main)', border: '1px solid var(--border-color)' } }} />
+            <Toaster
+              position="top-right"
+              containerStyle={{ top: 20, right: 20 }}
+              toastOptions={{
+                duration: 4500,
+                style: { background: 'transparent', boxShadow: 'none', border: 'none', padding: 0 }
+              }}
+            />
           </BrowserRouter>
         </AuthProvider>
       </ThemeProvider>

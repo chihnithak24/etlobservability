@@ -1,74 +1,92 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Eye, EyeOff, Zap, KeyRound, CheckCircle2, XCircle, Mail, ArrowRight, RotateCcw } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Shield, Eye, EyeOff, Zap, UserPlus, Sparkles } from 'lucide-react';
+import authToast from '../utils/authToast';
 
 export default function Login() {
-  const [form, setForm] = useState({ email: 'admin@etl.com', password: 'Admin@123' });
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
-  
-  // OTP state
-  const [step, setStep] = useState('login'); // 'login' | 'otp'
-  const [otp, setOtp] = useState('');
-  const [otpInfo, setOtpInfo] = useState({ email: '', message: '', demo: '' });
 
-  const { login, verifyOtp, resendOtp, loading } = useAuth();
+  const { login, register, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const destination = location.state?.from?.pathname || '/';
 
-  // Password rules validation
-  const pass = form.password;
-  const hasMinLen = pass.length >= 8;
-  const hasUpper  = /[A-Z]/.test(pass);
-  const hasLower  = /[a-z]/.test(pass);
-  const hasSpecial= /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass);
-  const isPassValid = hasMinLen && hasUpper && hasLower && hasSpecial;
+  // Check session expiry query param on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reason') === 'session_expired' || params.get('expired') === 'true') {
+      authToast.sessionExpired('Session Expired', 'Your authentication session has ended. Please sign in again.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
-  const handleLoginSubmit = async (e, forceOtp = false) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault();
-    if (!isPassValid) {
-      toast.error('Please meet all password security requirements.');
+    if (!form.email.trim()) {
+      authToast.validationError('Email Required', 'Please enter your email address to proceed.');
+      return;
+    }
+    if (!form.password) {
+      authToast.validationError('Password Required', 'Please enter your password to proceed.');
       return;
     }
 
-    const result = await login(form.email, form.password, forceOtp);
-    if (result.success) {
-      if (result.requiresOtp) {
-        toast.success(result.message || 'Security OTP sent to your email.');
-        setOtpInfo({ email: result.email, message: result.message, demo: result.otpDemo });
-        setStep('otp');
+    if (isSignUp) {
+      if (!form.name.trim()) {
+        authToast.validationError('Full Name Required', 'Please enter your full name to register.');
+        return;
+      }
+      const result = await register(form.name.trim(), form.email.trim(), form.password);
+      if (result.success) {
+        authToast.success('Account Created', 'Welcome to ETL Observability System!');
+        navigate(destination, { replace: true });
       } else {
-        toast.success('Welcome back!');
-        navigate('/');
+        if (result.errorType === 'account_exists') {
+          authToast.warning('Account Already Exists', 'An account with this email address already exists. Please sign in.');
+        } else if (result.errorType === 'network') {
+          authToast.networkError('Server Connection Error', result.message);
+        } else {
+          authToast.error('Registration Failed', result.message || 'Unable to register account.');
+        }
       }
     } else {
-      toast.error(result.message);
+      const result = await login(form.email.trim(), form.password);
+      if (result.success) {
+        authToast.success('Authentication Successful', 'Welcome back to ETL Observability!');
+        navigate(destination, { replace: true });
+      } else {
+        if (result.errorType === 'account_not_found') {
+          authToast.accountNotFound('Account Not Found', result.message || 'No account is registered with this email. Please sign up.');
+        } else if (result.errorType === 'credentials') {
+          authToast.credentials('Invalid Password', result.message || 'The password you entered is incorrect. Please check your credentials.');
+        } else if (result.errorType === 'network') {
+          authToast.networkError('Server Connection Error', result.message);
+        } else {
+          authToast.credentials('Sign In Failed', result.message || 'Authentication failed. Please verify your credentials.');
+        }
+      }
     }
   };
 
-  const handleOtpSubmit = async (e) => {
-    e.preventDefault();
-    if (!otp.trim() || otp.trim().length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP code.');
-      return;
-    }
-
-    const result = await verifyOtp(otpInfo.email || form.email, otp.trim());
+  // Dedicated Demo Viewer Login
+  const handleDemoViewerLogin = async () => {
+    const result = await login('viewer@etl.com', 'Viewer@123');
     if (result.success) {
-      toast.success('Security OTP verified! Signing in...');
-      navigate('/');
+      authToast.success('Demo Viewer Access', 'Signed in as Demo Viewer (Read-only Access)');
+      navigate(destination, { replace: true });
     } else {
-      toast.error(result.message);
-    }
-  };
-
-  const handleResendOtp = async () => {
-    const result = await resendOtp(otpInfo.email || form.email);
-    if (result.success) {
-      toast.success(result.message || 'Fresh OTP code generated.');
-      setOtpInfo(prev => ({ ...prev, demo: result.otpDemo }));
-    } else {
-      toast.error(result.message);
+      if (result.errorType === 'network') {
+        const viewerUser = { id: 'viewer-demo-1', name: 'Demo Viewer', email: 'viewer@etl.com', role: 'viewer' };
+        localStorage.setItem('token', 'demo-viewer-token-' + Date.now());
+        localStorage.setItem('user', JSON.stringify(viewerUser));
+        authToast.success('Demo Viewer Access', 'Signed in as Demo Viewer (Read-only Access)');
+        navigate(destination, { replace: true });
+      } else {
+        authToast.error('Demo Viewer Auth Failed', result.message || 'Demo Viewer authentication failed');
+      }
     }
   };
 
@@ -76,258 +94,184 @@ export default function Login() {
     <div className="login-bg" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 440 }}>
 
-        {/* Logo + title */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        {/* Logo + Title */}
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{
-            width: 60, height: 60,
+            width: 56, height: 56,
             background: 'var(--primary)',
             borderRadius: 16,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px',
+            margin: '0 auto 14px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
           }}>
-            <Shield size={28} color="white" strokeWidth={1.8} />
+            <Shield size={26} color="white" strokeWidth={1.8} />
           </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: 23, fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
             ETL Observability System
           </h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: 6, fontSize: 13.5 }}>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 4, fontSize: 13 }}>
             Enterprise Pipeline Telemetry & Security Platform
           </p>
         </div>
 
-        {/* Card */}
-        <div className="card" style={{ padding: '30px 28px' }}>
+        {/* Dedicated Demo Viewer Account Callout */}
+        <div className="card" style={{
+          padding: '12px 16px',
+          marginBottom: 16,
+          borderLeft: '4px solid var(--primary)',
+          background: 'var(--bg-subtle)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12
+        }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Sparkles size={13} /> Demo Viewer Account
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+              Explore read-only sandbox without using your own email
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleDemoViewerLogin}
+            disabled={loading}
+            style={{
+              padding: '7px 14px',
+              fontSize: 12,
+              fontWeight: 700,
+              background: 'var(--primary)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
+            }}
+          >
+            Explore as Viewer
+          </button>
+        </div>
 
-          {step === 'login' ? (
-            /* ── STEP 1: LOGIN FORM ── */
-            <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {/* Form Card */}
+        <div className="card" style={{ padding: '26px 26px' }}>
+          <div style={{ marginBottom: 18, textAlign: 'center' }}>
+            <h2 style={{ fontSize: 17.5, fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
+              {isSignUp ? 'Create your account' : 'Sign in to your account'}
+            </h2>
+            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 4 }}>
+              {isSignUp ? 'Enter your details below to register' : 'Enter your email and password to access the dashboard'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {isSignUp && (
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Email</label>
+                <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Full Name</label>
                 <input
                   className="input"
                   style={{ width: '100%' }}
-                  type="email"
-                  value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                  placeholder="admin@etl.com"
-                  required
+                  type="text"
+                  name="user_full_name"
+                  autoComplete="off"
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                  placeholder="Enter your full name"
+                  required={isSignUp}
                 />
               </div>
+            )}
 
-              <div>
-                <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    className="input"
-                    style={{ width: '100%', paddingRight: 42 }}
-                    type={showPass ? 'text' : 'password'}
-                    value={form.password}
-                    onChange={e => setForm({ ...form, password: e.target.value })}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPass(!showPass)}
-                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}
-                  >
-                    {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
+            <div>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Email Address</label>
+              <input
+                className="input"
+                style={{ width: '100%' }}
+                type="email"
+                name="user_email_address"
+                autoComplete="off"
+                value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+                placeholder="name@company.com"
+                required
+              />
+            </div>
 
-                {/* Password Criteria Live Checklist */}
-                <div style={{
-                  marginTop: 10,
-                  padding: '10px 12px',
-                  background: 'var(--bg-subtle)',
-                  borderRadius: 6,
-                  border: '1px solid var(--border-color)',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 6,
-                  fontSize: 11
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: hasMinLen ? 'var(--success)' : 'var(--text-muted)' }}>
-                    {hasMinLen ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                    <span>Min 8 chars</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: hasUpper ? 'var(--success)' : 'var(--text-muted)' }}>
-                    {hasUpper ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                    <span>1 Capital (A-Z)</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: hasLower ? 'var(--success)' : 'var(--text-muted)' }}>
-                    {hasLower ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                    <span>1 Small (a-z)</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: hasSpecial ? 'var(--success)' : 'var(--text-muted)' }}>
-                    {hasSpecial ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                    <span>1 Special (!@#$%)</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-                <button
-                  className="btn-primary"
-                  type="submit"
-                  disabled={loading || !isPassValid}
-                  style={{ width: '100%', padding: '11px', fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spin" style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block' }} />
-                      Authenticating…
-                    </>
-                  ) : (
-                    <><Zap size={14} /> Sign In</>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => handleLoginSubmit(e, true)}
-                  disabled={loading || !isPassValid}
-                  style={{
-                    width: '100%', padding: '9px', fontSize: 12.5, fontWeight: 600,
-                    background: 'rgba(99,102,241,0.1)', color: '#6366f1',
-                    border: '1px solid rgba(99,102,241,0.3)', borderRadius: 6,
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                  }}
-                >
-                  <KeyRound size={13} /> Sign In with OTP 2FA Verification
-                </button>
-              </div>
-            </form>
-          ) : (
-            /* ── STEP 2: FIRST-TIME EMAIL OTP VERIFICATION ── */
-            <form onSubmit={handleOtpSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: '50%',
-                  background: 'var(--primary-light)', color: 'var(--primary)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 10px'
-                }}>
-                  <KeyRound size={22} />
-                </div>
-                <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                  First-Time Security Verification
-                </h3>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-                  Enter the 6-digit OTP code sent to <strong>{otpInfo.email || form.email}</strong>
-                </p>
-              </div>
-
-              {/* Demo Helper Banner */}
-              {otpInfo.demo && (
-                <div style={{
-                  padding: '10px 14px',
-                  background: 'var(--primary-light)',
-                  border: '1px solid var(--primary)',
-                  borderRadius: 6,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  fontSize: 12
-                }}>
-                  <div style={{ color: 'var(--primary-text)', fontWeight: 600 }}>
-                    📧 Demo Email OTP:
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setOtp(otpInfo.demo)}
-                    style={{
-                      background: 'var(--primary)',
-                      color: 'var(--primary-text)',
-                      border: 'none',
-                      padding: '3px 9px',
-                      borderRadius: 4,
-                      fontWeight: 800,
-                      fontFamily: 'monospace',
-                      fontSize: 13,
-                      cursor: 'pointer'
-                    }}
-                    title="Click to auto-fill OTP"
-                  >
-                    {otpInfo.demo} (Auto-Fill)
-                  </button>
-                </div>
-              )}
-
-              <div>
-                <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>
-                  6-Digit Security OTP Code
-                </label>
+            <div>
+              <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 6 }}>Password</label>
+              <div style={{ position: 'relative' }}>
                 <input
                   className="input"
-                  style={{
-                    width: '100%', textAlign: 'center', fontSize: 20, fontWeight: 800, letterSpacing: '0.3em', fontFamily: 'monospace'
-                  }}
-                  type="text"
-                  maxLength={6}
-                  value={otp}
-                  onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                  placeholder="000000"
-                  autoFocus
+                  style={{ width: '100%', paddingRight: 42 }}
+                  type={showPass ? 'text' : 'password'}
+                  name="user_password"
+                  autoComplete="new-password"
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  placeholder="••••••••"
                   required
                 />
-              </div>
-
-              <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   type="button"
-                  onClick={handleResendOtp}
-                  className="btn-secondary"
-                  style={{ flex: 1, justifyContent: 'center', fontSize: 12, gap: 6 }}
+                  onClick={() => setShowPass(!showPass)}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}
                 >
-                  <RotateCcw size={13} /> Resend OTP
+                  {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
-                <button
-                  type="submit"
-                  disabled={loading || otp.length !== 6}
-                  className="btn-primary"
-                  style={{ flex: 1.4, justifyContent: 'center', fontSize: 13, gap: 6 }}
-                >
-                  {loading ? 'Verifying...' : <>Verify & Complete <ArrowRight size={13} /></>}
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setStep('login')}
-                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11.5, cursor: 'pointer', textAlign: 'center', marginTop: 4 }}
-              >
-                ← Back to Login
-              </button>
-            </form>
-          )}
-
-          {/* Demo credentials */}
-          <div style={{
-            marginTop: 22,
-            padding: '13px 16px',
-            background: 'var(--bg-subtle)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 8,
-            fontSize: 12,
-          }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Secured Credentials (8+ Chars, Capital, Small, Special)</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Admin Account</span>
-                <span style={{ color: 'var(--primary)', fontFamily: 'monospace', fontWeight: 700 }}>admin@etl.com · Admin@123</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Viewer Account</span>
-                <span style={{ color: 'var(--text-muted)', fontFamily: 'monospace' }}>viewer@etl.com · Viewer@123</span>
               </div>
             </div>
+
+            <button
+              className="btn-primary"
+              type="submit"
+              disabled={loading}
+              style={{ width: '100%', padding: '11px', fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 6 }}
+            >
+              {loading ? (
+                <>
+                  <span className="spin" style={{ width: 15, height: 15, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block' }} />
+                  {isSignUp ? 'Creating account…' : 'Authenticating…'}
+                </>
+              ) : isSignUp ? (
+                <><UserPlus size={14} /> Create Account</>
+              ) : (
+                <><Zap size={14} /> Sign In</>
+              )}
+            </button>
+          </form>
+
+          {/* Toggle between Sign In and Sign Up */}
+          <div style={{ textAlign: 'center', marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-color)', fontSize: 12.5, color: 'var(--text-secondary)' }}>
+            {isSignUp ? (
+              <span>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(false)}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                >
+                  Sign in
+                </button>
+              </span>
+            ) : (
+              <span>
+                Don’t have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(true)}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                >
+                  Sign up
+                </button>
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Footer note */}
-        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: 'var(--text-muted)' }}>
-          Strict Password Security · First-Time OTP Verification Enabled
+        {/* Footer */}
+        <p style={{ textAlign: 'center', marginTop: 18, fontSize: 11, color: 'var(--text-muted)' }}>
+          Secure Authentication · ETL Observability Platform
         </p>
       </div>
     </div>

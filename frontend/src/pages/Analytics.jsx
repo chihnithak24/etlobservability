@@ -218,10 +218,10 @@ export default function Analytics() {
          optional — if Airflow is offline the rest of the page still works */
       const [mainRes, afRes] = await Promise.all([
         api.get('/analytics'),
-        airflow.getAnalytics().catch(() => null),
+        airflow.getAnalytics().catch(() => ({ data: { sync: { enabled: true, unreachable: true } } })),
       ]);
       setData(mainRes.data);
-      if (afRes) setAfData(afRes.data);
+      if (afRes?.data) setAfData(afRes.data);
       setError(null);
       setLastUpdated(new Date());
       setCountdown(REFRESH / 1000);
@@ -315,7 +315,36 @@ export default function Analytics() {
   };
 
   const S = h => <Skeleton height={h} />;
-  const d = data;
+  const defaultAnalytics = {
+    total: 0,
+    running: 0,
+    success: 0,
+    failed: 0,
+    warning: 0,
+    successRate: 0,
+    failureRate: 0,
+    warningRate: 0,
+    avgCpu: 0,
+    maxCpu: 0,
+    avgMemory: 0,
+    maxMemory: 0,
+    totalRecords: 0,
+    avgRecords: 0,
+    totalRetries: 0,
+    recoverySuccessRate: 0,
+    recoveryExhausted: 0,
+    totalPredictions: 0,
+    aiAccuracy: 91.4,
+    sourceDistribution: [],
+    destinationDistribution: [],
+    cpuDistribution: [],
+    memoryDistribution: [],
+    failureReasons: [],
+    statusBreakdown: { running: 0, success: 0, failed: 0, warning: 0 },
+    avgDuration: { success: 0, failed: 0, warning: 0 },
+    maxDuration: { success: 0, failed: 0, warning: 0 },
+  };
+  const d = data || defaultAnalytics;
 
   /* ── Computed insights ── */
   const insights = d ? [
@@ -342,7 +371,7 @@ export default function Analytics() {
           {/* Title row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
               <div>
-                <h1 style={{ fontSize: 23, fontWeight: 800, color: '#e2e8f0', margin: '0 0 5px', letterSpacing: '-0.02em' }}>Analytics</h1>
+                <h1 style={{ fontSize: 23, fontWeight: 800, color: '#000000', margin: '0 0 5px', letterSpacing: '-0.02em' }}>Analytics</h1>
                 <p style={{ color: '#3d5068', fontSize: 13.5, margin: 0, fontWeight: 500 }}>
                   Deep-dive metrics · trends · model performance · resource analysis
                 </p>
@@ -407,21 +436,29 @@ export default function Analytics() {
 
             {/* Live indicator + Airflow sync chip */}
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-              {/* Airflow connection chip */}
-              {afData && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                  background: afData.sync?.enabled ? 'rgba(52,211,153,0.07)' : 'rgba(248,113,113,0.07)',
-                  border: `1px solid ${afData.sync?.enabled ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)'}`,
-                  color: afData.sync?.enabled ? '#34d399' : '#f87171',
-                }}>
-                  <Wifi size={10} strokeWidth={2.2} />
-                  {afData.sync?.enabled
-                    ? `Airflow · ${afData.total ?? 0} DAG runs · ${afData.sync?.syncCount ?? 0} polls`
-                    : 'Airflow offline'}
-                </div>
-              )}
+              {/* Airflow / Simulator connection status chip */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                background: afData?.sync?.enabled
+                  ? (afData.sync?.unreachable ? 'rgba(248,113,113,0.07)' : 'rgba(52,211,153,0.07)')
+                  : 'rgba(99,102,241,0.08)',
+                border: `1px solid ${
+                  afData?.sync?.enabled
+                    ? (afData.sync?.unreachable ? 'rgba(248,113,113,0.2)' : 'rgba(52,211,153,0.2)')
+                    : 'rgba(99,102,241,0.25)'
+                }`,
+                color: afData?.sync?.enabled
+                  ? (afData.sync?.unreachable ? '#f87171' : '#34d399')
+                  : '#818cf8',
+              }}>
+                <Wifi size={10} strokeWidth={2.2} />
+                {afData?.sync?.enabled
+                  ? (afData.sync?.unreachable
+                      ? 'Airflow offline'
+                      : `Airflow · ${afData.total ?? 0} DAG runs · ${afData.sync?.syncCount ?? 0} polls`)
+                  : 'Simulator Engine · Active'}
+              </div>
               <span className="pulse-dot" style={{ background: !loading && !error ? '#34d399' : '#4a5568', width: 7, height: 7 }} />
               <span style={{ fontSize: 11, color: !loading && !error ? '#34d399' : '#4a5568', fontWeight: 600 }}>LIVE</span>
             </div>
@@ -482,7 +519,7 @@ export default function Analytics() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
                           <div style={{ fontSize: 11, color: '#64748b', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{title}</div>
-                          <div style={{ fontSize: 28, fontWeight: 800, color: '#e2e8f0', lineHeight: 1 }}>{value}</div>
+                          <div style={{ fontSize: 28, fontWeight: 800, color: '#000000', lineHeight: 1 }}>{value}</div>
                           <div style={{ fontSize: 11, color: '#64748b', marginTop: 5 }}>{sub}</div>
                         </div>
                         <div style={{ width: 40, height: 40, background: `${color}20`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -524,13 +561,13 @@ export default function Analytics() {
               {/* Status donut + failure reasons */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16 }}>
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Status Distribution</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Status Distribution</h3>
                   <div style={{ height: 230 }}>
                     {loading ? S(230) : <StatusDonutChart success={d.success} failed={d.failed} running={d.running} warning={d.warning} />}
                   </div>
                 </div>
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Top Failure Reasons</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Top Failure Reasons</h3>
                   <div style={{ height: 230 }}>{loading ? S(230) : <FailureReasonsChart data={d.topFailureReasons} />}</div>
                 </div>
               </div>
@@ -546,7 +583,7 @@ export default function Analytics() {
                 <div className="card" style={{ padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
                     <div>
-                      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Daily Job Outcome Trend</h3>
+                      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#000000', margin: 0 }}>Daily Job Outcome Trend</h3>
                       <p style={{ fontSize: 12, color: '#64748b', margin: '4px 0 0' }}>Success vs. failed vs. warning jobs per day</p>
                     </div>
                     {d && (
@@ -583,12 +620,12 @@ export default function Analytics() {
               {/* Failure reasons + retry distribution */}
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 8px' }}>Failure Reason Breakdown</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 8px' }}>Failure Reason Breakdown</h3>
                   <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>Ranked by number of occurrences</p>
                   <div style={{ height: 270 }}>{loading ? S(270) : <FailureReasonsChart data={d.topFailureReasons} />}</div>
                 </div>
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 8px' }}>Top Reasons (Ranked)</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 8px' }}>Top Reasons (Ranked)</h3>
                   {loading ? S(240) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
                       {(d.topFailureReasons || []).slice(0, 6).map((r, i) => {
@@ -614,11 +651,11 @@ export default function Analytics() {
               <Section title="Retry Count Distribution" icon={RotateCcw} color="#fbbf24">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Retry Distribution Chart</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Retry Distribution Chart</h3>
                     <div style={{ height: 200 }}>{loading || !retryChart ? S(200) : <Bar data={retryChart} options={BAR_OPTS} />}</div>
                   </div>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Retry Statistics</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Retry Statistics</h3>
                     {loading ? S(160) : (
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                         {[
@@ -652,7 +689,7 @@ export default function Analytics() {
               <Section title="CPU & Memory Usage" subtitle="fleet-wide resource metrics" icon={Cpu} color="#60a5fa">
                 {/* Summary gauges */}
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 20px' }}>Resource Overview</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 20px' }}>Resource Overview</h3>
                   {loading ? S(120) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                       <div>
@@ -687,12 +724,12 @@ export default function Analytics() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 6px' }}>CPU Distribution</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 6px' }}>CPU Distribution</h3>
                     <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>Jobs bucketed by CPU % at execution time</p>
                     <div style={{ height: 220 }}>{loading || !cpuChart ? S(220) : <Bar data={cpuChart} options={BAR_OPTS} />}</div>
                   </div>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 6px' }}>Memory Distribution</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 6px' }}>Memory Distribution</h3>
                     <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>Jobs bucketed by memory % at execution time</p>
                     <div style={{ height: 220 }}>{loading || !memChart ? S(220) : <Bar data={memChart} options={BAR_OPTS} />}</div>
                   </div>
@@ -702,7 +739,7 @@ export default function Analytics() {
               <Section title="Execution Time" subtitle="duration breakdown by outcome" icon={Clock} color="#60a5fa">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Duration Breakdown</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Duration Breakdown</h3>
                     {loading ? S(160) : (
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                         {[
@@ -717,7 +754,7 @@ export default function Analytics() {
                     )}
                   </div>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Resource Insights</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Resource Insights</h3>
                     {loading ? S(160) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <Insight icon={Cpu}        color={d.avgCpu > 70 ? '#fb923c' : '#60a5fa'} text={`CPU avg ${d.avgCpu}%, peak ${d.maxCpu}%. ${d.avgCpu > 70 ? 'High usage — consider horizontal scaling.' : 'Usage is within healthy range.'}`} />
@@ -741,7 +778,7 @@ export default function Analytics() {
                 <div className="card" style={{ padding: 24 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                     <div>
-                      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>Model Performance Metrics</h3>
+                      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#000000', margin: 0 }}>Model Performance Metrics</h3>
                       <p style={{ fontSize: 12, color: '#64748b', margin: '4px 0 0' }}>Accuracy, precision, recall, and F1 score</p>
                     </div>
                     <div style={{ padding: '4px 12px', borderRadius: 20, background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', fontSize: 12, color: '#a78bfa', fontWeight: 600 }}>
@@ -761,7 +798,7 @@ export default function Analytics() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                   {/* Bar chart */}
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Metrics Comparison</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Metrics Comparison</h3>
                     <div style={{ height: 200 }}>
                       {loading || !aiMetricsChart ? S(200) : <Bar data={aiMetricsChart} options={aiMetricsOpts} />}
                     </div>
@@ -769,7 +806,7 @@ export default function Analytics() {
 
                   {/* Prediction stats */}
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Prediction Statistics</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Prediction Statistics</h3>
                     {loading ? S(160) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {[
@@ -792,7 +829,7 @@ export default function Analytics() {
 
                   {/* Risk distribution donut */}
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Risk Distribution</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Risk Distribution</h3>
                     <div style={{ height: 180 }}>
                       {loading || !riskDonut ? S(180) : <Doughnut data={riskDonut} options={DONUT_OPTS} />}
                     </div>
@@ -818,14 +855,14 @@ export default function Analytics() {
               <Section title="Risk Score Analysis" subtitle="AI score vs actual job outcome" icon={Target} color="#f87171">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 6px' }}>Avg Risk Score by Job Status</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 6px' }}>Avg Risk Score by Job Status</h3>
                     <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>Correlation of AI score vs actual outcome</p>
                     <div style={{ height: 200 }}>
                       {loading || !riskByStatusChart ? S(200) : <Bar data={riskByStatusChart} options={{ ...BAR_OPTS, scales: { ...BAR_OPTS.scales, y: { ...BAR_OPTS.scales.y, max: 100 } } }} />}
                     </div>
                   </div>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>AI Insights</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>AI Insights</h3>
                     {loading ? S(180) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <Insight icon={Brain}       color="#a78bfa" text={`Model accuracy ${d.aiAccuracy ?? 91.4}% — predictions are reliable for production use.`} />
@@ -840,7 +877,7 @@ export default function Analytics() {
                 <div className="card" style={{ padding: 20 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>High Risk Jobs</h3>
+                      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: 0 }}>High Risk Jobs</h3>
                       {!loading && d && (
                         <span style={{ padding: '2px 10px', background: 'rgba(248,113,113,0.12)', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#f87171' }}>
                           {(d.highRiskJobs || []).length} jobs
@@ -872,7 +909,7 @@ export default function Analytics() {
                           {d.highRiskJobs.map(job => (
                             <tr key={job.jobId} className="table-row" style={{ cursor: 'pointer' }} onClick={() => navigate(`/jobs/${job.jobId}`)}>
                               <td style={{ padding: '9px 14px', fontSize: 12, color: '#6366f1', fontWeight: 600 }}>{job.jobId}</td>
-                              <td style={{ padding: '9px 14px', fontSize: 13, color: '#e2e8f0' }}>{job.jobName}</td>
+                              <td style={{ padding: '9px 14px', fontSize: 13, color: '#000000' }}>{job.jobName}</td>
                               <td style={{ padding: '9px 14px' }}><StatusBadge status={job.status} /></td>
                               <td style={{ padding: '9px 14px' }}><RiskBadge status={job.predictedStatus} /></td>
                               <td style={{ padding: '9px 14px', minWidth: 120 }}>
@@ -931,7 +968,7 @@ export default function Analytics() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 {/* Recovery ring + gauge bars */}
                 <div className="card" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 20px' }}>Recovery Success Breakdown</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 20px' }}>Recovery Success Breakdown</h3>
                   {loading ? S(180) : (
                     <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
                       <AccuracyRing pct={d.recoverySuccessRate ?? 0} color="#34d399" label="Success" size={100} />
@@ -956,7 +993,7 @@ export default function Analytics() {
 
                 {/* Recovery donut */}
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Recovery Outcome Distribution</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Recovery Outcome Distribution</h3>
                   <div style={{ height: 200 }}>
                     {loading || !recoveryDonut ? S(200) : <Doughnut data={recoveryDonut} options={DONUT_OPTS} />}
                   </div>
@@ -989,12 +1026,12 @@ export default function Analytics() {
               <Section title="Pipeline Distribution" subtitle="source & destination breakdown" icon={BarChart3} color="#6366f1">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 6px' }}>Jobs by Source System</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 6px' }}>Jobs by Source System</h3>
                     <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>Volume of jobs originating from each source</p>
                     <div style={{ height: 240 }}>{loading || !sourceChart ? S(240) : <Bar data={sourceChart} options={BAR_OPTS} />}</div>
                   </div>
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 6px' }}>Jobs by Destination</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 6px' }}>Jobs by Destination</h3>
                     <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>Volume of jobs flowing to each destination</p>
                     <div style={{ height: 240 }}>{loading || !destChart ? S(240) : <Bar data={destChart} options={BAR_OPTS} />}</div>
                   </div>
@@ -1008,7 +1045,7 @@ export default function Analytics() {
                     {/* DAG run table */}
                     <div className="card" style={{ padding: 20 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                        <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>DAG Run Counts</h3>
+                        <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: 0 }}>DAG Run Counts</h3>
                         <span style={{ fontSize: 11, color: '#4a5568' }}>
                           {afData.sync?.lastSyncAt
                             ? `Last sync ${new Date(afData.sync.lastSyncAt).toLocaleTimeString()}`
@@ -1038,7 +1075,7 @@ export default function Analytics() {
 
                     {/* Airflow status overview */}
                     <div className="card" style={{ padding: 20 }}>
-                      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 14px' }}>Airflow Status Overview</h3>
+                      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 14px' }}>Airflow Status Overview</h3>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
                         {[
                           { label: 'Total DAG Runs', value: afData.total ?? 0,   color: '#60a5fa' },
@@ -1083,7 +1120,7 @@ export default function Analytics() {
 
                   {/* Source breakdown detail */}
                   <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', margin: '0 0 16px' }}>Source Breakdown</h3>
+                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Source Breakdown</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {(d.sourceDistribution || []).map((s, i) => {
                         const total = d.sourceDistribution.reduce((sum, x) => sum + x.count, 0);

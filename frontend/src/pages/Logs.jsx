@@ -131,7 +131,7 @@ export default function Logs() {
       setPages(data.pages);
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Cannot reach backend. Is the server running on port 5000?');
+      setError(err.response?.data?.message || 'Cannot connect to backend server. Please verify backend service availability.');
     } finally {
       setLoading(false);
     }

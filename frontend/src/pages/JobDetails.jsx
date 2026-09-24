@@ -508,7 +508,7 @@ export default function JobDetails() {
           </button>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <h1 style={{ fontSize: 20, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>{job.jobName}</h1>
+              <h1 style={{ fontSize: 20, fontWeight: 700, color: '#000000', margin: 0 }}>{job.jobName}</h1>
               <StatusBadge status={job.status} />
               {job.status === 'failed' && <button onClick={handleRetry} disabled={retrying} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                 <RotateCcw size={14} /> {retrying ? 'Retrying...' : 'Auto Retry'}
@@ -612,7 +612,7 @@ export default function JobDetails() {
                   <AlertTriangle size={16} color="#f87171" />
                   <span style={{ fontSize: 14, fontWeight: 600, color: '#f87171' }}>Failure Reason</span>
                 </div>
-                <p style={{ color: '#e2e8f0', margin: 0, fontSize: 14 }}>{job.failureReason}</p>
+                <p style={{ color: '#000000', margin: 0, fontSize: 14 }}>{job.failureReason}</p>
               </div>
             )}
 
@@ -627,7 +627,7 @@ export default function JobDetails() {
                   {job.recoveryActions.map((action, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(52,211,153,0.05)', borderRadius: 6 }}>
                       <span style={{ color: '#34d399', fontSize: 12, fontWeight: 700 }}>{i + 1}</span>
-                      <span style={{ fontSize: 13, color: '#e2e8f0' }}>{action}</span>
+                      <span style={{ fontSize: 13, color: '#000000' }}>{action}</span>
                     </div>
                   ))}
                 </div>
@@ -639,7 +639,7 @@ export default function JobDetails() {
         {activeTab === 'logs' && (
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid #1e2535', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#e2e8f0' }}>ETL Log Viewer</h3>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#000000' }}>ETL Log Viewer</h3>
               <span style={{ fontSize: 12, color: '#64748b' }}>{job.logs?.length ?? 0} entries</span>
             </div>
             <div style={{ background: '#0a0d14', padding: 20, fontFamily: 'monospace', fontSize: 13, maxHeight: 500, overflowY: 'auto' }}>
@@ -648,7 +648,7 @@ export default function JobDetails() {
                 <div key={i} style={{ display: 'flex', gap: 16, marginBottom: 8, lineHeight: 1.6 }}>
                   <span style={{ color: '#4a5568', whiteSpace: 'nowrap', fontSize: 12 }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
                   <span style={{ color: logLevelColor[log.level] || '#94a3b8', fontWeight: 700, minWidth: 40 }}>{log.level}</span>
-                  <span style={{ color: '#e2e8f0' }}>{log.message}</span>
+                  <span style={{ color: '#000000' }}>{log.message}</span>
                 </div>
               ))}
             </div>
@@ -660,7 +660,7 @@ export default function JobDetails() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* ── AI Risk Assessment ── */}
             <div className="card" style={{ padding: 20 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', margin: '0 0 16px' }}>AI Risk Assessment</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#000000', margin: '0 0 16px' }}>AI Risk Assessment</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 20 }}>
                 <div style={{ width: 80, height: 80, borderRadius: '50%', border: `4px solid ${getRiskColor(job.aiRiskScore)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                   <span style={{ fontSize: 20, fontWeight: 700, color: getRiskColor(job.aiRiskScore) }}>{job.aiRiskScore}</span>
@@ -670,7 +670,7 @@ export default function JobDetails() {
                   <div style={{ fontSize: 16, fontWeight: 600, color: getRiskColor(job.aiRiskScore) }}>
                     {job.predictedStatus === 'likely_fail' ? 'High Risk' : job.predictedStatus === 'at_risk' ? 'Medium Risk' : 'Low Risk'}
                   </div>
-                  <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Predicted: <span style={{ color: '#e2e8f0' }}>{job.predictedStatus?.replace('_', ' ')}</span></div>
+                  <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Predicted: <span style={{ color: '#000000' }}>{job.predictedStatus?.replace('_', ' ')}</span></div>
                 </div>
               </div>
               <RiskScore score={job.aiRiskScore} />
@@ -684,7 +684,7 @@ export default function JobDetails() {
                   <span style={{ fontSize: 14, fontWeight: 600, color: '#fbbf24' }}>Detected Anomalies</span>
                 </div>
                 {job.anomalies.map((a, i) => (
-                  <div key={i} style={{ padding: '8px 12px', background: 'rgba(251,191,36,0.05)', borderRadius: 6, marginBottom: 6, fontSize: 13, color: '#e2e8f0' }}>⚠ {a}</div>
+                  <div key={i} style={{ padding: '8px 12px', background: 'rgba(251,191,36,0.05)', borderRadius: 6, marginBottom: 6, fontSize: 13, color: '#000000' }}>⚠ {a}</div>
                 ))}
               </div>
             )}
@@ -760,7 +760,7 @@ export default function JobDetails() {
                           {rca.signals.map((sig, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 12px', background: 'rgba(167,139,250,0.05)', border: '1px solid rgba(167,139,250,0.12)', borderRadius: 6 }}>
                               <span style={{ color: '#a78bfa', fontSize: 11, fontWeight: 700, marginTop: 1 }}>#{i + 1}</span>
-                              <span style={{ fontSize: 13, color: '#e2e8f0' }}>{sig}</span>
+                              <span style={{ fontSize: 13, color: '#000000' }}>{sig}</span>
                             </div>
                           ))}
                         </div>
@@ -773,7 +773,7 @@ export default function JobDetails() {
                           {rca.solutions.map((sol, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 12px', background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.1)', borderRadius: 6 }}>
                               <span style={{ minWidth: 22, height: 22, borderRadius: '50%', background: 'rgba(52,211,153,0.15)', color: '#34d399', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</span>
-                              <span style={{ fontSize: 13, color: '#e2e8f0', paddingTop: 2 }}>{sol}</span>
+                              <span style={{ fontSize: 13, color: '#000000', paddingTop: 2 }}>{sol}</span>
                             </div>
                           ))}
                         </div>
@@ -909,7 +909,7 @@ export default function JobDetails() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Brain size={18} color="#a78bfa" />
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0' }}>AI Failure Prediction</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#000000' }}>AI Failure Prediction</div>
                   <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Pre-execution risk scoring · CPU, memory, retry, duration, data volume, job history</div>
                 </div>
               </div>
@@ -989,7 +989,7 @@ export default function JobDetails() {
                   {prediction.recommendedAction && (
                     <div style={{ padding: '12px 16px', background: '#0f1117', borderRadius: 8, borderLeft: `3px solid ${predMeta.color}` }}>
                       <div style={{ fontSize: 11, color: '#64748b', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended Action</div>
-                      <div style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6 }}>{prediction.recommendedAction}</div>
+                      <div style={{ fontSize: 13, color: '#000000', lineHeight: 1.6 }}>{prediction.recommendedAction}</div>
                     </div>
                   )}
                 </div>
@@ -999,7 +999,7 @@ export default function JobDetails() {
                   <div className="card" style={{ padding: 20 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                       <TrendingUp size={15} color="#6366f1" />
-                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>Feature Contributions</h3>
+                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#000000', margin: 0 }}>Feature Contributions</h3>
                       <span style={{ fontSize: 11, color: '#4a5568', marginLeft: 'auto' }}>contribution to risk score</span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1009,7 +1009,7 @@ export default function JobDetails() {
                       })}
                     </div>
                     <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #1e2535', display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#64748b' }}>
-                      <span>Total feature score: <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{Object.values(prediction.features).reduce((s, f) => s + f.points, 0)} pts</span></span>
+                      <span>Total feature score: <span style={{ color: '#000000', fontWeight: 600 }}>{Object.values(prediction.features).reduce((s, f) => s + f.points, 0)} pts</span></span>
                       <span>Max possible: 100 pts</span>
                     </div>
                   </div>
@@ -1020,7 +1020,7 @@ export default function JobDetails() {
                   <div className="card" style={{ padding: 20 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                       <AlertTriangle size={15} color="#fbbf24" />
-                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>Root Cause Analysis</h3>
+                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#000000', margin: 0 }}>Root Cause Analysis</h3>
                     </div>
                     <p style={{ fontSize: 13, color: '#94a3b8', margin: 0, lineHeight: 1.7 }}>{prediction.rootCause}</p>
                   </div>
@@ -1031,12 +1031,12 @@ export default function JobDetails() {
                   <div className="card" style={{ padding: 20 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                       <CheckCircle size={15} color="#34d399" />
-                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>Recovery Actions</h3>
+                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#000000', margin: 0 }}>Recovery Actions</h3>
                     </div>
                     {prediction.recoveryActions.map((action, i) => (
                       <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: i < prediction.recoveryActions.length - 1 ? '1px solid #1e2535' : 'none' }}>
                         <span style={{ color: '#34d399', fontWeight: 700, fontSize: 13, minWidth: 16 }}>{i + 1}.</span>
-                        <span style={{ fontSize: 13, color: '#e2e8f0' }}>{action}</span>
+                        <span style={{ fontSize: 13, color: '#000000' }}>{action}</span>
                       </div>
                     ))}
                   </div>
@@ -1050,7 +1050,7 @@ export default function JobDetails() {
                       <h3 style={{ fontSize: 14, fontWeight: 600, color: '#fbbf24', margin: 0 }}>Anomalies Detected</h3>
                     </div>
                     {prediction.anomalies.map((a, i) => (
-                      <div key={i} style={{ fontSize: 13, color: '#e2e8f0', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div key={i} style={{ fontSize: 13, color: '#000000', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <AlertTriangle size={11} color="#fbbf24" /> {a}
                       </div>
                     ))}
@@ -1069,10 +1069,10 @@ export default function JobDetails() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <History size={15} color="#6366f1" />
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>Prediction History</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: '#000000', margin: 0 }}>Prediction History</h3>
                   <span style={{ fontSize: 11, color: '#64748b' }}>stored in MongoDB</span>
                 </div>
-                <button onClick={fetchHistory} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', background: '#2d3748', border: '1px solid #4a5568', borderRadius: 6, color: '#e2e8f0', cursor: 'pointer', fontSize: 11 }}>
+                <button onClick={fetchHistory} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', background: '#2d3748', border: '1px solid #4a5568', borderRadius: 6, color: '#000000', cursor: 'pointer', fontSize: 11 }}>
                   <RefreshCw size={11} /> Refresh
                 </button>
               </div>

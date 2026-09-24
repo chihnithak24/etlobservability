@@ -49,8 +49,8 @@ export default function ETLAssistant() {
       let botResponse = '';
       const lower = q.toLowerCase();
 
-      // Artificial delay so user sees the animated 3-dots indicator (...)
-      await new Promise(res => setTimeout(res, 1000));
+      // Delay for thinking animation
+      await new Promise(res => setTimeout(res, 800));
 
       if (lower.includes('running') || lower.includes('active') || lower.includes('चल रहे') || lower.includes('నడుస్తున్నాయి')) {
         const { data } = await api.get('/jobs?status=running');
@@ -131,8 +131,8 @@ export default function ETLAssistant() {
     right: '3vw',
     width: '94vw',
     height: '92vh',
-    background: '#ffffff',
-    border: '1px solid #cbd5e1',
+    background: 'var(--bg-card, #ffffff)',
+    border: '1px solid var(--border-color, #cbd5e1)',
     borderRadius: 12,
     boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
     display: 'flex',
@@ -146,10 +146,10 @@ export default function ETLAssistant() {
     right: 24,
     width: 320,
     height: 48,
-    background: '#ffffff',
-    border: '1px solid #cbd5e1',
+    background: 'var(--bg-card, #ffffff)',
+    border: '1px solid #DDA0DD',
     borderRadius: 24,
-    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+    boxShadow: '0 8px 24px rgba(221, 160, 221, 0.25)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -169,10 +169,10 @@ export default function ETLAssistant() {
     maxHeight: '90vh',
     resize: 'both',
     overflow: 'hidden',
-    background: '#ffffff',
-    border: '1px solid #cbd5e1',
-    borderRadius: 10,
-    boxShadow: '0 12px 30px -5px rgba(0,0,0,0.2)',
+    background: 'var(--bg-card, #ffffff)',
+    border: '1px solid rgba(221, 160, 221, 0.5)',
+    borderRadius: 12,
+    boxShadow: '0 12px 30px -5px rgba(221, 160, 221, 0.2)',
     display: 'flex',
     flexDirection: 'column',
     zIndex: 1000,
@@ -192,23 +192,23 @@ export default function ETLAssistant() {
             height: 42,
             padding: '0 18px',
             borderRadius: 21,
-            background: '#2563eb',
-            color: 'white',
-            border: '1px solid #1d4ed8',
-            boxShadow: '0 4px 14px rgba(37,99,235,0.3)',
+            background: '#DDA0DD',
+            color: '#ffffff',
+            border: '1px solid #c070c0',
+            boxShadow: '0 4px 14px rgba(221, 160, 221, 0.45)',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
             cursor: 'pointer',
             zIndex: 999,
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: 13,
-            transition: 'all 0.15s',
+            transition: 'all 0.15s ease',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#1d4ed8'}
-          onMouseLeave={e => e.currentTarget.style.background = '#2563eb'}
+          onMouseEnter={e => e.currentTarget.style.background = '#c070c0'}
+          onMouseLeave={e => e.currentTarget.style.background = '#DDA0DD'}
         >
-          <Sparkles size={16} />
+          <Sparkles size={16} color="#ffffff" />
           <span>{t('assistantTitle', lang)}</span>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#4ade80' }} />
         </button>
@@ -220,14 +220,14 @@ export default function ETLAssistant() {
           /* Minimized Bar */
           <div style={windowStyle} onClick={() => setIsMinimized(false)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Bot size={18} color="#2563eb" />
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{t('assistantTitle', lang)}</span>
+              <Bot size={18} color="#DDA0DD" />
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main, #0f172a)' }}>{t('assistantTitle', lang)}</span>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a34a' }} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button
                 onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }}
-                style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: 4 }}
+                style={{ background: 'none', border: 'none', color: '#DDA0DD', cursor: 'pointer', padding: 4 }}
                 title="Restore Window"
               >
                 <Maximize2 size={14} />
@@ -247,8 +247,8 @@ export default function ETLAssistant() {
             {/* Header Controls Bar */}
             <div style={{
               padding: '10px 14px',
-              background: '#f8fafc',
-              borderBottom: '1px solid #e2e8f0',
+              background: 'var(--bg-subtle, #f8fafc)',
+              borderBottom: '1px solid rgba(221, 160, 221, 0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -257,13 +257,13 @@ export default function ETLAssistant() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{
                   width: 28, height: 28, borderRadius: 6,
-                  background: '#dbeafe',
+                  background: 'rgba(221, 160, 221, 0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                  <Bot size={16} color="#2563eb" />
+                  <Bot size={16} color="#DDA0DD" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#DDA0DD' }}>
                     {t('assistantTitle', lang)}
                   </div>
                   <div style={{ fontSize: 10, color: '#16a34a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -273,7 +273,7 @@ export default function ETLAssistant() {
                 </div>
               </div>
 
-              {/* Language Selector + Window Controls (Minimize, Maximize, Close) */}
+              {/* Language Selector + Window Controls */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <LanguageSelector selectedLang={lang} onChange={setLang} />
 
@@ -309,8 +309,8 @@ export default function ETLAssistant() {
             {/* Quick Prompts Bar */}
             <div style={{
               padding: '8px 12px',
-              background: '#ffffff',
-              borderBottom: '1px solid #f1f5f9',
+              background: 'var(--bg-card, #ffffff)',
+              borderBottom: '1px solid var(--border-color, #f1f5f9)',
               display: 'flex',
               gap: 6,
               overflowX: 'auto',
@@ -324,17 +324,17 @@ export default function ETLAssistant() {
                     onClick={() => handleQuery(text)}
                     style={{
                       padding: '4px 10px',
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      background: 'rgba(221, 160, 221, 0.08)',
+                      border: '1px solid rgba(221, 160, 221, 0.3)',
                       borderRadius: 12,
-                      color: '#475569',
+                      color: 'var(--text-main, #475569)',
                       fontSize: 11.5,
                       cursor: 'pointer',
                       flexShrink: 0,
-                      transition: 'all 0.15s',
+                      transition: 'all 0.15s ease',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#2563eb'; e.currentTarget.style.color = '#2563eb'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#475569'; }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#DDA0DD'; e.currentTarget.style.color = '#c070c0'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(221, 160, 221, 0.3)'; e.currentTarget.style.color = 'var(--text-main, #475569)'; }}
                   >
                     {text}
                   </button>
@@ -350,7 +350,7 @@ export default function ETLAssistant() {
               display: 'flex',
               flexDirection: 'column',
               gap: 14,
-              background: '#ffffff',
+              background: 'var(--bg-card, #ffffff)',
             }}>
               {messages.map(m => (
                 <div
@@ -358,11 +358,11 @@ export default function ETLAssistant() {
                   style={{
                     alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start',
                     maxWidth: isMaximized ? '75%' : '88%',
-                    background: m.sender === 'user' ? '#2563eb' : '#f1f5f9',
-                    color: m.sender === 'user' ? '#ffffff' : '#0f172a',
+                    background: m.sender === 'user' ? '#DDA0DD' : 'var(--bg-subtle, #f8fafc)',
+                    color: m.sender === 'user' ? '#ffffff' : 'var(--text-main, #0f172a)',
                     padding: '11px 15px',
                     borderRadius: m.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                    border: m.sender === 'user' ? 'none' : '1px solid #e2e8f0',
+                    border: m.sender === 'user' ? 'none' : '1px solid rgba(221, 160, 221, 0.25)',
                     fontSize: isMaximized ? 14 : 12.5,
                     lineHeight: 1.55,
                     whiteSpace: 'pre-wrap',
@@ -382,16 +382,16 @@ export default function ETLAssistant() {
               {loading && (
                 <div style={{
                   alignSelf: 'flex-start',
-                  background: '#f1f5f9',
+                  background: 'rgba(221, 160, 221, 0.1)',
                   padding: '10px 14px',
                   borderRadius: '12px 12px 12px 2px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid rgba(221, 160, 221, 0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
                 }}>
-                  <Bot size={15} color="#2563eb" />
-                  <ThinkingDots label={t('analyzing', lang)} color="#2563eb" />
+                  <Bot size={15} color="#DDA0DD" />
+                  <ThinkingDots label={t('analyzing', lang)} color="#DDA0DD" />
                 </div>
               )}
               <div ref={chatEndRef} />
@@ -402,8 +402,8 @@ export default function ETLAssistant() {
               onSubmit={(e) => { e.preventDefault(); handleQuery(); }}
               style={{
                 padding: '12px 14px',
-                background: '#f8fafc',
-                borderTop: '1px solid #e2e8f0',
+                background: 'var(--bg-subtle, #f8fafc)',
+                borderTop: '1px solid rgba(221, 160, 221, 0.3)',
                 display: 'flex',
                 gap: 8,
                 alignItems: 'center',
@@ -416,11 +416,11 @@ export default function ETLAssistant() {
                 onChange={(e) => setInput(e.target.value)}
                 style={{
                   flex: 1,
-                  background: '#ffffff',
-                  border: '1px solid #cbd5e1',
+                  background: 'var(--bg-card, #ffffff)',
+                  border: '1px solid rgba(221, 160, 221, 0.4)',
                   borderRadius: 6,
                   padding: isMaximized ? '10px 14px' : '8px 12px',
-                  color: '#0f172a',
+                  color: 'var(--text-main, #0f172a)',
                   fontSize: isMaximized ? 14 : 12.5,
                   outline: 'none',
                 }}
@@ -435,7 +435,7 @@ export default function ETLAssistant() {
                 disabled={loading || !input.trim()}
                 style={{
                   padding: isMaximized ? '10px 18px' : '8px 14px',
-                  background: '#2563eb',
+                  background: '#DDA0DD',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: 6,
@@ -444,9 +444,10 @@ export default function ETLAssistant() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(221, 160, 221, 0.3)'
                 }}
               >
-                <Send size={15} />
+                <Send size={15} color="#ffffff" />
               </button>
             </form>
           </div>

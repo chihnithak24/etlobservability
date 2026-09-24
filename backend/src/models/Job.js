@@ -107,11 +107,18 @@ jobSchema.index({ aiRiskScore: -1 });
 jobSchema.index({ source:    1 });
 
 // Airflow dedup: the pair (dagId, dagRunId) must be unique among Airflow jobs.
-// Sparse so it only applies to documents where both fields are set, leaving
-// manual/seed jobs (dagId: null) unaffected.
+// Partial filter so it only applies to documents where both fields are valid strings,
+// leaving manual/seed/simulator jobs (dagId: null) unaffected and avoiding E11000 null collisions.
 jobSchema.index(
   { dagId: 1, dagRunId: 1 },
-  { unique: true, sparse: true, name: 'airflow_run_unique' }
+  {
+    unique: true,
+    partialFilterExpression: {
+      dagId: { $type: 'string' },
+      dagRunId: { $type: 'string' }
+    },
+    name: 'airflow_run_unique'
+  }
 );
 
 module.exports = mongoose.model('Job', jobSchema);

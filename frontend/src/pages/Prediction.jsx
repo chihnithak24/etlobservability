@@ -74,7 +74,7 @@ function AtRiskRow({ job, onPredict, navigate }) {
   return (
     <tr className="table-row" style={{ cursor: 'pointer' }} onClick={() => navigate(`/jobs/${job.jobId}`)}>
       <td style={{ padding: '10px 14px', fontSize: 13, color: '#6366f1', fontWeight: 500 }}>{job.jobId}</td>
-      <td style={{ padding: '10px 14px', fontSize: 13, color: '#e2e8f0' }}>{job.jobName}</td>
+      <td style={{ padding: '10px 14px', fontSize: 13, color: '#000000' }}>{job.jobName}</td>
       <td style={{ padding: '10px 14px' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: m.bg, color: m.color, border: `1px solid ${m.border}` }}>
           <m.Icon size={10} />{m.label}
@@ -208,7 +208,7 @@ export default function Prediction() {
         {/* ── Header ─────────────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#000000', margin: 0 }}>
               AI Failure Prediction
             </h1>
             <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
@@ -251,7 +251,7 @@ export default function Prediction() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Brain size={20} color="#a78bfa" />
-                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#000000', margin: 0 }}>
                   Job Parameters
                 </h3>
               </div>
@@ -324,7 +324,7 @@ export default function Prediction() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
+                        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#000000', margin: 0 }}>
                           Prediction Result
                         </h3>
                         {/* Voice Speaker button */}
@@ -368,7 +368,7 @@ export default function Prediction() {
                       <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Recommended Action
                       </div>
-                      <div style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.6 }}>
+                      <div style={{ fontSize: 13, color: '#000000', lineHeight: 1.6 }}>
                         {result.recommendedAction}
                       </div>
                     </div>
@@ -380,7 +380,7 @@ export default function Prediction() {
                   <div className="card" style={{ padding: 20 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                       <TrendingUp size={15} color="#6366f1" />
-                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>
+                      <h3 style={{ fontSize: 14, fontWeight: 600, color: '#000000', margin: 0 }}>
                         Feature Contributions
                       </h3>
                       <span style={{ fontSize: 11, color: '#4a5568', marginLeft: 'auto' }}>points towards risk score</span>
@@ -398,7 +398,7 @@ export default function Prediction() {
                 <div className="card" style={{ padding: 20 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                     <AlertTriangle size={15} color="#fbbf24" />
-                    <h3 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, color: '#000000', margin: 0 }}>
                       Root Cause Analysis
                     </h3>
                   </div>
@@ -411,14 +411,14 @@ export default function Prediction() {
                 <div className="card" style={{ padding: 20 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                     <CheckCircle size={15} color="#34d399" />
-                    <h3 style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>
+                    <h3 style={{ fontSize: 14, fontWeight: 600, color: '#000000', margin: 0 }}>
                       Recovery Actions
                     </h3>
                   </div>
                   {result.recoveryActions.map((action, i) => (
                     <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: i < result.recoveryActions.length - 1 ? '1px solid #1e2535' : 'none' }}>
                       <span style={{ color: '#34d399', fontWeight: 700, fontSize: 13, minWidth: 16 }}>{i + 1}.</span>
-                      <span style={{ fontSize: 13, color: '#e2e8f0' }}>{action}</span>
+                      <span style={{ fontSize: 13, color: '#000000' }}>{action}</span>
                     </div>
                   ))}
                 </div>
@@ -433,7 +433,7 @@ export default function Prediction() {
                       </h3>
                     </div>
                     {result.anomalies.map((a, i) => (
-                      <div key={i} style={{ fontSize: 13, color: '#e2e8f0', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div key={i} style={{ fontSize: 13, color: '#000000', padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                         <AlertTriangle size={11} color="#fbbf24" />
                         {a}
                       </div>
@@ -450,13 +450,13 @@ export default function Prediction() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <ShieldAlert size={18} color="#fbbf24" />
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#000000', margin: 0 }}>
                 At-Risk &amp; Likely-Fail Jobs
               </h3>
             </div>
             <button
               onClick={fetchAtRisk}
-              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: '#2d3748', border: '1px solid #4a5568', borderRadius: 7, color: '#e2e8f0', cursor: 'pointer', fontSize: 12 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: '#2d3748', border: '1px solid #4a5568', borderRadius: 7, color: '#000000', cursor: 'pointer', fontSize: 12 }}
             >
               <RefreshCw size={12} /> Refresh
             </button>
@@ -492,7 +492,7 @@ export default function Prediction() {
           <div className="card" style={{ padding: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <Clock size={16} color="#6366f1" />
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', margin: 0 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: '#000000', margin: 0 }}>
                 Recent Predictions
               </h3>
             </div>
@@ -503,7 +503,7 @@ export default function Prediction() {
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 12px', background: '#111827', borderRadius: 8, border: '1px solid #1e2535' }}>
                     <m.Icon size={16} color={m.color} style={{ flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, color: '#e2e8f0', fontWeight: 500 }}>
+                      <div style={{ fontSize: 13, color: '#000000', fontWeight: 500 }}>
                         {h.jobId || h.input?.jobName || 'Manual prediction'}
                         <span style={{ marginLeft: 8, fontSize: 11, color: '#64748b' }}>
                           CPU {h.input?.cpuUsage ?? '—'}% · Mem {h.input?.memoryUsage ?? '—'}%

@@ -4,15 +4,15 @@ import { LANGUAGES, speakText, stopSpeech, startVoiceRecognition, t } from '../.
 import toast from 'react-hot-toast';
 
 /** Animated 3-dots thinking indicator (...) */
-export function ThinkingDots({ label, color = '#a78bfa' }) {
+export function ThinkingDots({ label, color = '#DDA0DD' }) {
   return (
     <div style={{
       display: 'inline-flex',
       alignItems: 'center',
       gap: 8,
       padding: '6px 14px',
-      background: 'rgba(99, 102, 241, 0.12)',
-      border: '1px solid rgba(99, 102, 241, 0.25)',
+      background: 'rgba(221, 160, 221, 0.12)',
+      border: '1px solid rgba(221, 160, 221, 0.3)',
       borderRadius: 20,
       fontSize: 12.5,
       fontWeight: 600,
@@ -36,12 +36,12 @@ export function LanguageSelector({ selectedLang, onChange }) {
       display: 'inline-flex',
       alignItems: 'center',
       gap: 4,
-      background: '#1e293b',
-      border: '1px solid #334155',
+      background: 'var(--bg-subtle, #f8fafc)',
+      border: '1px solid var(--border-color, #e2e8f0)',
       borderRadius: 8,
       padding: 3,
     }}>
-      <Globe size={14} color="#94a3b8" style={{ margin: '0 4px' }} />
+      <Globe size={13} color="#DDA0DD" style={{ margin: '0 4px' }} />
       {LANGUAGES.map((l) => {
         const active = selectedLang === l.code;
         return (
@@ -51,13 +51,13 @@ export function LanguageSelector({ selectedLang, onChange }) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 5,
-              padding: '4px 9px',
+              gap: 4,
+              padding: '3px 8px',
               borderRadius: 6,
-              fontSize: 12,
+              fontSize: 11.5,
               fontWeight: active ? 700 : 500,
-              background: active ? '#6366f1' : 'transparent',
-              color: active ? '#ffffff' : '#cbd5e1',
+              background: active ? '#DDA0DD' : 'transparent',
+              color: active ? '#ffffff' : 'var(--text-secondary, #64748b)',
               border: 'none',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
@@ -100,7 +100,7 @@ export function VoiceSpeaker({ text, lang = 'en' }) {
         () => setIsSpeaking(false),
         (err) => {
           setIsSpeaking(false);
-          toast.error('Voice playback error');
+          toast.error(typeof err === 'string' ? err : 'Voice playback error');
         }
       );
     }
@@ -116,11 +116,11 @@ export function VoiceSpeaker({ text, lang = 'en' }) {
         gap: 6,
         padding: '5px 11px',
         borderRadius: 6,
-        fontSize: 12,
+        fontSize: 11.5,
         fontWeight: 600,
-        background: isSpeaking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(99, 102, 241, 0.15)',
-        color: isSpeaking ? '#f87171' : '#818cf8',
-        border: `1px solid ${isSpeaking ? 'rgba(239, 68, 68, 0.4)' : 'rgba(99, 102, 241, 0.3)'}`,
+        background: isSpeaking ? 'rgba(239, 68, 68, 0.15)' : 'rgba(221, 160, 221, 0.15)',
+        color: isSpeaking ? '#dc2626' : '#c070c0',
+        border: `1px solid ${isSpeaking ? 'rgba(239, 68, 68, 0.3)' : 'rgba(221, 160, 221, 0.4)'}`,
         cursor: 'pointer',
         transition: 'all 0.15s ease',
       }}
@@ -133,7 +133,7 @@ export function VoiceSpeaker({ text, lang = 'en' }) {
         </>
       ) : (
         <>
-          <Volume2 size={14} />
+          <Volume2 size={14} color="#DDA0DD" />
           <span>{t('listenVoice', lang)}</span>
         </>
       )}
@@ -144,9 +144,13 @@ export function VoiceSpeaker({ text, lang = 'en' }) {
 /** Voice Dictation (Microphone) Button */
 export function MicDictation({ onTranscript, lang = 'en' }) {
   const [isListening, setIsListening] = useState(false);
+  const [activeRecognition, setActiveRecognition] = useState(null);
 
   const handleListen = () => {
     if (isListening) {
+      if (activeRecognition) {
+        try { activeRecognition.stop(); } catch {}
+      }
       setIsListening(false);
       return;
     }
@@ -154,7 +158,7 @@ export function MicDictation({ onTranscript, lang = 'en' }) {
     setIsListening(true);
     toast(t('listening', lang), { icon: '🎙️' });
 
-    startVoiceRecognition(
+    const rec = startVoiceRecognition(
       lang,
       (transcript) => {
         setIsListening(false);
@@ -165,12 +169,14 @@ export function MicDictation({ onTranscript, lang = 'en' }) {
       },
       (err) => {
         setIsListening(false);
-        toast.error(`Mic error: ${err}`);
+        toast.error(err);
       },
       () => {
         setIsListening(false);
       }
     );
+
+    if (rec) setActiveRecognition(rec);
   };
 
   return (
@@ -182,17 +188,21 @@ export function MicDictation({ onTranscript, lang = 'en' }) {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 5,
-        padding: '6px 10px',
+        padding: '7px 11px',
         borderRadius: 6,
-        background: isListening ? '#ef4444' : '#334155',
-        color: '#ffffff',
-        border: 'none',
+        background: isListening ? '#dc2626' : 'rgba(221, 160, 221, 0.18)',
+        color: isListening ? '#ffffff' : '#a855a8',
+        border: `1px solid ${isListening ? '#dc2626' : 'rgba(221, 160, 221, 0.4)'}`,
         cursor: 'pointer',
         transition: 'all 0.15s ease',
       }}
       title={isListening ? t('listening', lang) : t('micSpeak', lang)}
     >
-      {isListening ? <MicOff size={14} className="pulse-mic" /> : <Mic size={14} />}
+      {isListening ? (
+        <MicOff size={15} className="pulse-mic" />
+      ) : (
+        <Mic size={15} color="#c070c0" />
+      )}
     </button>
   );
 }
