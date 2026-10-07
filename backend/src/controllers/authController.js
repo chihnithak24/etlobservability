@@ -184,4 +184,50 @@ const googleLogin = async (req, res) => {
 const verifyOtp = async (req, res) => res.json({ success: true });
 const resendOtp = async (req, res) => res.json({ success: true });
 
-module.exports = { login, register, googleLogin, validateLogin, verifyOtp, resendOtp };
+/* ── POST /api/auth/viewer (Explore as Viewer) ─────────────────────── */
+const viewerLogin = async (req, res) => {
+  try {
+    const email = 'viewer@etl.com';
+    const cleanEmail = email.toLowerCase().trim();
+    const displayName = 'Demo Viewer';
+
+    let user = null;
+    if (User && typeof User.findOne === 'function') {
+      try { user = await User.findOne({ email: cleanEmail }); } catch { /* ignore */ }
+    }
+    if (!user) user = inMemoryUsers.find(u => u.email === cleanEmail);
+
+    if (!user) {
+      user = { _id: String(Date.now()), name: displayName, email: cleanEmail, role: 'viewer' };
+      if (User && typeof User.create === 'function') {
+        try {
+          const dbUser = await User.create({ name: displayName, email: cleanEmail, password: bcrypt.hashSync('Viewer@123', 10), role: 'viewer' });
+          user._id = dbUser._id;
+        } catch {}
+      }
+      inMemoryUsers.push(user);
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || 'etl_super_secret_jwt_key_2026';
+    const token = jwt.sign(
+      { id: user._id || user.id || 'viewer-demo', email: cleanEmail, role: 'viewer' },
+      jwtSecret,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user._id || user.id || 'viewer-demo',
+        name: user.name || displayName,
+        email: cleanEmail,
+        role: 'viewer'
+      }
+    });
+  } catch (err) {
+    console.error('[Auth] Viewer login error:', err);
+    res.status(500).json({ message: 'Viewer login failed' });
+  }
+};
+
+module.exports = { login, register, googleLogin, validateLogin, verifyOtp, resendOtp, viewerLogin };

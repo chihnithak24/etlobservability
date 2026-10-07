@@ -137,6 +137,36 @@ export const AuthProvider = ({ children }) => {
   const verifyOtp = async () => ({ success: true });
   const resendOtp = async () => ({ success: true });
 
+  const exploreAsViewer = async () => {
+    setLoading(true);
+    try {
+      let res;
+      try {
+        res = await api.post('/auth/viewer');
+      } catch {
+        res = await api.post('/auth/login', { email: 'viewer@etl.com', password: 'Viewer@123' });
+      }
+      const data = res.data;
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setUser(data.user);
+      return { success: true, user: data.user };
+    } catch (err) {
+      const fallbackUser = {
+        id: 'viewer-' + Date.now(),
+        name: 'Demo Viewer',
+        email: 'viewer@etl.com',
+        role: 'viewer'
+      };
+      localStorage.setItem('token', 'viewer-token-' + Date.now());
+      localStorage.setItem('user', JSON.stringify(fallbackUser));
+      setUser(fallbackUser);
+      return { success: true, user: fallbackUser, isFallback: true };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -144,7 +174,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, googleLogin, verifyOtp, resendOtp, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, googleLogin, exploreAsViewer, verifyOtp, resendOtp, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

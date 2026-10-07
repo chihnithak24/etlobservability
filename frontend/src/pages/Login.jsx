@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Eye, EyeOff, Zap, UserPlus } from 'lucide-react';
+import { Shield, Eye, EyeOff, Zap, UserPlus, Compass } from 'lucide-react';
 import authToast from '../utils/authToast';
 
 export default function Login() {
@@ -9,10 +9,11 @@ export default function Login() {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [readOnly, setReadOnly] = useState(true);
+  const [viewerLoading, setViewerLoading] = useState(false);
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
 
-  const { login, register, loading } = useAuth();
+  const { login, register, exploreAsViewer, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const destination = location.state?.from?.pathname || '/';
@@ -93,6 +94,23 @@ export default function Login() {
           authToast.credentials('Sign In Failed', result.message || 'Authentication failed. Please verify your credentials.');
         }
       }
+    }
+  };
+
+  const handleExploreAsViewer = async () => {
+    setViewerLoading(true);
+    try {
+      const result = await exploreAsViewer();
+      if (result?.success) {
+        authToast.success('Viewer Access Granted', 'Exploring ETL Observability System in demo viewer mode.');
+        navigate(destination, { replace: true });
+      } else {
+        authToast.error('Viewer Access Failed', result?.message || 'Could not enter viewer mode.');
+      }
+    } catch {
+      authToast.error('Viewer Access Failed', 'An unexpected error occurred.');
+    } finally {
+      setViewerLoading(false);
     }
   };
 
@@ -228,7 +246,7 @@ export default function Login() {
             <button
               className="btn-primary"
               type="submit"
-              disabled={loading}
+              disabled={loading || viewerLoading}
               style={{ width: '100%', padding: '11px', fontSize: 13.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 6 }}
             >
               {loading ? (
@@ -240,6 +258,56 @@ export default function Login() {
                 <><UserPlus size={14} /> Create Account</>
               ) : (
                 <><Zap size={14} /> Sign In</>
+              )}
+            </button>
+
+            {/* Explore as Viewer option */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 2px' }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>or</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleExploreAsViewer}
+              disabled={loading || viewerLoading}
+              className="btn-secondary"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                fontSize: 13,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-main)',
+                cursor: 'pointer',
+                borderRadius: 'var(--radius, 6px)',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.color = 'var(--primary)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.color = 'var(--text-main)';
+              }}
+            >
+              {viewerLoading ? (
+                <>
+                  <span className="spin" style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'var(--primary)', borderRadius: '50%', display: 'inline-block' }} />
+                  Entering as Viewer…
+                </>
+              ) : (
+                <>
+                  <Compass size={15} color="var(--primary)" />
+                  <span>Explore as Viewer</span>
+                </>
               )}
             </button>
           </form>
