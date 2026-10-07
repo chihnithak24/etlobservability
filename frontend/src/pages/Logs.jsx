@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import Pagination from '../components/ui/Pagination';
-import { TableSkeleton } from '../components/ui/Skeleton';
+import Skeleton from '../components/ui/Skeleton';
 import api from '../utils/api';
 import usePolling from '../hooks/usePolling';
 import { formatDate } from '../utils/helpers';
@@ -347,7 +347,11 @@ export default function Logs() {
               </div>
 
               {loading ? (
-                <div style={{ padding: 20 }}><TableSkeleton rows={10} cols={4} /></div>
+                <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <Skeleton key={i} height={24} />
+                  ))}
+                </div>
               ) : logs.length === 0 ? (
                 <div style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>
                   <FileText size={32} style={{ opacity: 0.4, display: 'block', margin: '0 auto 12px' }} />

@@ -7,22 +7,16 @@ import api from '../../utils/api';
 
 const ROUTE_LABELS = {
   '/':           'Dashboard',
-  '/dags':       'DAG Pipelines',
-  '/jobs':       'ETL Jobs',
+  '/jobs':       'Jobs',
   '/monitoring': 'Live Monitoring',
-  '/analytics':  'Analytics',
-  '/alerts':     'Alerts',
-  '/prediction': 'AI Predictions',
-  '/rca':        'Root Cause Analysis',
-  '/recovery':   'Recovery Hub',
-  '/logs':       'Log Viewer',
+  '/analytics':  'Basic Analytics',
   '/reports':    'Reports',
+  '/alerts':     'Alerts',
   '/settings':   'Settings',
-  '/about':      'About',
 };
 
-const TYPE_ICON  = { failure: AlertTriangle, warning: AlertTriangle, prediction: Brain, recovery: CheckCircle };
-const TYPE_COLOR = { failure: 'var(--error)', warning: 'var(--warning)', prediction: '#8b5cf6', recovery: 'var(--success)' };
+const TYPE_ICON  = { failure: AlertTriangle, warning: AlertTriangle, prediction: Brain, recovery: CheckCircle, success: CheckCircle };
+const TYPE_COLOR = { failure: 'var(--error)', warning: 'var(--warning)', prediction: 'var(--primary)', recovery: 'var(--success)', success: 'var(--success)' };
 
 function useTime() {
   const [t, setT] = useState(() => new Date());
@@ -37,25 +31,35 @@ function useNotifications() {
   const [notifs, setNotifs]   = useState([]);
   const [loading, setLoading] = useState(false);
   const load = async () => {
-    setLoading(true);
     try {
-      const { data } = await api.get('/alerts?limit=6');
-      setNotifs(Array.isArray(data) ? data.slice(0, 6) : []);
+      const { data } = await api.get('/alerts?limit=15');
+      setNotifs(Array.isArray(data) ? data : []);
     } catch { /**/ } finally { setLoading(false); }
   };
   const markRead = async (id) => {
     try {
       await api.put(`/alerts/${id}/read`);
       setNotifs(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+      window.dispatchEvent(new CustomEvent('alerts-updated'));
     } catch { /**/ }
   };
   const markAllRead = async () => {
     try {
       await api.put('/alerts/read-all');
       setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+      window.dispatchEvent(new CustomEvent('alerts-updated'));
     } catch { /**/ }
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 8000);
+    const handler = () => load();
+    window.addEventListener('alerts-updated', handler);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('alerts-updated', handler);
+    };
+  }, []);
   return { notifs, loading, refresh: load, markRead, markAllRead };
 }
 
@@ -68,6 +72,7 @@ export default function Navbar({ onRefresh }) {
   const [search, setSearch]               = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [notifOpen, setNotifOpen]         = useState(false);
+  const [notifTab, setNotifTab]           = useState('unread');
   const [refreshing, setRefreshing]       = useState(false);
   const notifRef = useRef(null);
 
@@ -143,7 +148,7 @@ export default function Navbar({ onRefresh }) {
             flex: 1, background: 'transparent', border: 'none', outline: 'none',
             color: 'var(--text-main)', fontSize: 12.5, fontFamily: 'inherit',
           }}
-          placeholder="Search DAGs, tasks, jobs..."
+          placeholder="Search jobs..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           onKeyDown={handleSearch}
@@ -222,7 +227,12 @@ export default function Navbar({ onRefresh }) {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   {unread > 0 && (
-                    <button onClick={markAllRead} style={{ fontSize: 11, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                    <button
+                      onClick={async () => {
+                        await markAllRead();
+                      }}
+                      style={{ fontSize: 11, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    >
                       Mark all read
                     </button>
                   )}
@@ -232,41 +242,94 @@ export default function Navbar({ onRefresh }) {
                 </div>
               </div>
 
+              {/* Tabs: Unread / All */}
+              <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-subtle)', padding: '4px 12px', gap: 6 }}>
+                <button
+                  onClick={() => setNotifTab('unread')}
+                  style={{
+                    border: 'none', background: notifTab === 'unread' ? 'var(--primary-light)' : 'transparent',
+                    color: notifTab === 'unread' ? 'var(--primary)' : 'var(--text-secondary)',
+                    fontWeight: notifTab === 'unread' ? 700 : 500,
+                    fontSize: 11, padding: '4px 8px', borderRadius: 4, cursor: 'pointer',
+                  }}
+                >
+                  Unread ({unread})
+                </button>
+                <button
+                  onClick={() => setNotifTab('all')}
+                  style={{
+                    border: 'none', background: notifTab === 'all' ? 'var(--primary-light)' : 'transparent',
+                    color: notifTab === 'all' ? 'var(--primary)' : 'var(--text-secondary)',
+                    fontWeight: notifTab === 'all' ? 700 : 500,
+                    fontSize: 11, padding: '4px 8px', borderRadius: 4, cursor: 'pointer',
+                  }}
+                >
+                  All ({notifs.length})
+                </button>
+              </div>
+
               {/* Items */}
               {nLoading ? (
                 <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[80, 60, 70].map((w, i) => <div key={i} className="skeleton" style={{ height: 14, width: `${w}%` }} />)}
                 </div>
-              ) : notifs.length === 0 ? (
+              ) : (notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs).length === 0 ? (
                 <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12.5 }}>
-                  <CheckCircle size={20} color="var(--success)" style={{ marginBottom: 6, opacity: 0.8 }} /><br />All caught up
+                  <CheckCircle size={22} color="var(--success)" style={{ marginBottom: 6, opacity: 0.85 }} /><br />
+                  <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>All caught up</span><br />
+                  <span style={{ fontSize: 11 }}>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications found'}</span>
                 </div>
-              ) : notifs.map(n => {
-                const Icon  = TYPE_ICON[n.type]  || Bell;
-                const color = TYPE_COLOR[n.type] || 'var(--text-muted)';
-                return (
-                  <div
-                    key={n._id}
-                    onClick={() => { markRead(n._id); setNotifOpen(false); navigate('/alerts'); }}
-                    style={{
-                      display: 'flex', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border-subtle)',
-                      cursor: 'pointer', background: !n.read ? 'var(--primary-light)' : 'var(--bg-card)',
-                      opacity: n.read ? 0.75 : 1,
-                    }}
-                  >
-                    <div style={{ width: 28, height: 28, background: `${color}15`, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Icon size={14} color={color} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: !n.read ? 700 : 500, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.jobName}</span>
-                        <span style={{ fontSize: 10, color: 'var(--text-muted)', flexShrink: 0 }}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              ) : (
+                <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+                  {(notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs).map(n => {
+                    const Icon  = TYPE_ICON[n.type]  || Bell;
+                    const color = TYPE_COLOR[n.type] || 'var(--text-muted)';
+                    return (
+                      <div
+                        key={n._id}
+                        onClick={async () => {
+                          if (!n.read) await markRead(n._id);
+                          setNotifOpen(false);
+                          navigate('/alerts');
+                        }}
+                        style={{
+                          display: 'flex', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--border-subtle)',
+                          cursor: 'pointer', background: !n.read ? 'var(--primary-light)' : 'var(--bg-card)',
+                          opacity: n.read ? 0.75 : 1, alignItems: 'center'
+                        }}
+                      >
+                        <div style={{ width: 28, height: 28, background: `${color}15`, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Icon size={14} color={color} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+                            <span style={{ fontSize: 12, fontWeight: !n.read ? 700 : 500, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.jobName}</span>
+                            <span style={{ fontSize: 10, color: 'var(--text-muted)', flexShrink: 0 }}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.message}</div>
+                        </div>
+                        {!n.read && (
+                          <button
+                            title="Mark as read"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await markRead(n._id);
+                            }}
+                            style={{
+                              background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                              color: 'var(--text-muted)', display: 'flex', alignItems: 'center', borderRadius: 4, flexShrink: 0
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                          >
+                            <CheckCircle size={15} />
+                          </button>
+                        )}
                       </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.message}</div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Footer */}
               <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border-color)', background: 'var(--bg-subtle)' }}>

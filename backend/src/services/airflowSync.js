@@ -44,7 +44,29 @@ const {
 }                                  = require('./airflowService');
 
 /* ── ring-buffer for Dashboard activity feed ───────────────────────── */
-const recentEvents  = [];
+const recentEvents  = [
+  {
+    id: 'evt-init-1',
+    type: 'success',
+    jobId: 'JOB-SYNC-01',
+    msg: 'Pipeline "Customer 360 Sync" completed successfully — 14,200 records loaded',
+    time: new Date(Date.now() - 45000).toISOString(),
+  },
+  {
+    id: 'evt-init-2',
+    type: 'running',
+    jobId: 'JOB-SYNC-02',
+    msg: 'Pipeline "Sales Analytics ETL" in stage TRANSFORM — 8,900 records processed',
+    time: new Date(Date.now() - 25000).toISOString(),
+  },
+  {
+    id: 'evt-init-3',
+    type: 'warning',
+    jobId: 'JOB-SYNC-03',
+    msg: 'Pipeline "Financial Reconciliation" high memory usage detected (78%)',
+    time: new Date(Date.now() - 10000).toISOString(),
+  }
+];
 const pushEvent = (event) => {
   recentEvents.unshift(event);
   if (recentEvents.length > 50) recentEvents.pop();
@@ -511,4 +533,4 @@ const getSyncStatus = () => ({
   recentCount: recentEvents.length,
 });
 
-module.exports = { startSync, getRecentEvents, getSyncStatus };
+module.exports = { startSync, getRecentEvents, getSyncStatus, pushEvent };

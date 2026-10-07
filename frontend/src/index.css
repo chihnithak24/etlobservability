@@ -224,6 +224,33 @@
   }
   .btn-danger:hover { opacity: 0.9; }
 
+  .tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 15px;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    user-select: none;
+  }
+  .tab-btn:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-main);
+  }
+  .tab-btn.active {
+    background: var(--primary-light);
+    color: var(--primary-text);
+    border-color: var(--primary);
+    font-weight: 700;
+  }
+
   /* ──────────────────────────────────────────────
      STATUS BADGES
   ────────────────────────────────────────────── */

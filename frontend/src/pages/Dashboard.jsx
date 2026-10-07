@@ -26,88 +26,6 @@ const SEV_COLOR = {
   critical: '#dc2626', high: '#ea580c', medium: '#d97706', low: '#16a34a',
 };
 
-/** Interactive ETL Pipeline Simulator Controller */
-function QuickEtlController({ onTriggered }) {
-  const [running, setRunning] = useState(false);
-  const navigate = useNavigate();
-
-  const handleRun = async (forceFailure = false) => {
-    setRunning(true);
-    try {
-      await monitoring.spawnSimulatedJob(forceFailure);
-      toast.success(forceFailure ? 'Spawned test failure job' : 'ETL Job spawned & running!');
-      onTriggered?.();
-    } catch {
-      toast.error('Could not start ETL job');
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  return (
-    <div className="card" style={{
-      padding: '16px 20px',
-      background: 'var(--primary-light)',
-      border: '1px solid var(--primary)',
-      borderRadius: 8,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 16,
-      flexWrap: 'wrap'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{
-          width: 42, height: 42, borderRadius: 8,
-          background: 'var(--primary)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--primary-text)', fontWeight: 800, flexShrink: 0
-        }}>
-          <Play size={20} fill="currentColor" />
-        </div>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>Interactive ETL Pipeline Simulator</span>
-            <span style={{ fontSize: 10, background: 'var(--primary)', color: 'var(--primary-text)', padding: '2px 7px', borderRadius: 10, fontWeight: 700 }}>LIVE</span>
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-            Simulate a real-world 3-stage pipeline: <strong>EXTRACT</strong> (Source) ➔ <strong>TRANSFORM</strong> (Logic) ➔ <strong>LOAD</strong> (Warehouse)
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button
-          onClick={() => handleRun(false)}
-          disabled={running}
-          className="btn-primary"
-          style={{ padding: '8px 16px', fontSize: 13, gap: 8 }}
-        >
-          <Play size={14} fill="currentColor" />
-          <span>{running ? 'Starting...' : 'Run ETL Pipeline'}</span>
-        </button>
-        <button
-          onClick={() => handleRun(true)}
-          disabled={running}
-          className="btn-secondary"
-          style={{ padding: '8px 14px', fontSize: 12.5, gap: 6, borderColor: 'var(--error-border)', color: 'var(--error)' }}
-        >
-          <AlertTriangle size={13} color="var(--error)" />
-          <span>Test Failure</span>
-        </button>
-        <button
-          onClick={() => navigate('/monitoring')}
-          className="btn-secondary"
-          style={{ padding: '8px 14px', fontSize: 12.5, gap: 6 }}
-        >
-          <Activity size={13} color="var(--primary)" />
-          <span>Live Monitor →</span>
-        </button>
-      </div>
-    </div>
-  );
-}
-
 /** Enterprise KPI panel */
 function KpiPanel({ title, value, sub, icon: Icon, color, loading }) {
   if (loading) return <Skeleton height={90} />;
@@ -367,7 +285,7 @@ export default function Dashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.015em' }}>
-              ETL Observability Overview
+              Dashboard
             </h1>
             <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 4 }}>
               Real-time pipeline performance metrics and active monitoring indicators.
@@ -382,9 +300,6 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-
-        {/* ── Quick ETL Controller Widget ── */}
-        <QuickEtlController onTriggered={fetch} />
 
         {/* ── KPI row ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 14 }}>
@@ -538,10 +453,10 @@ export default function Dashboard() {
           {/* Quick nav */}
           <Panel title="Quick Links" icon={Zap} iconColor="#d97706">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <QuickNav label="Live Monitoring"  sub="Real-time job telemetry" to="/monitoring" color="#2563eb" navigate={navigate} />
-              <QuickNav label="AI Predictions"    sub="Risk forecast model"     to="/prediction" color="#7c3aed" navigate={navigate} />
-              <QuickNav label="Log Viewer"       sub="Search pipeline logs"    to="/logs"       color="#d97706" navigate={navigate} />
-              <QuickNav label="Reports"          sub="Export ETL metrics"      to="/reports"    color="#16a34a" navigate={navigate} />
+              <QuickNav label="Jobs"             sub="View all ETL executions"   to="/jobs"       color="#2563eb" navigate={navigate} />
+              <QuickNav label="Live Monitoring"  sub="Real-time job telemetry"   to="/monitoring" color="#16a34a" navigate={navigate} />
+              <QuickNav label="Basic Analytics"  sub="Pipeline metrics & trends" to="/analytics"  color="#7c3aed" navigate={navigate} />
+              <QuickNav label="Alerts"           sub="Active issues & alerts"    to="/alerts"     color="#dc2626" navigate={navigate} />
             </div>
           </Panel>
         </div>

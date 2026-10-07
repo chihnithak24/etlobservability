@@ -15,6 +15,10 @@ const { runPrediction } = require('../controllers/predictionController');
 const { createAlert } = require('../controllers/alertController');
 const { triggerAutoRecovery } = require('../controllers/recoveryController');
 const logService = require('../utils/logService');
+let pushEvent = null;
+try {
+  pushEvent = require('./airflowSync').pushEvent;
+} catch (_) {}
 
 /* ── Configuration from env ────────────────────────────────────────── */
 const JOB_INTERVAL_MS    = parseInt(process.env.SIMULATOR_JOB_INTERVAL_MS    || '10000', 10);
@@ -145,6 +149,16 @@ const spawnJob = async (forceFailure = false) => {
     warnAlertSent: false,
     retryAttempt: 0,
   });
+
+  if (typeof pushEvent === 'function') {
+    pushEvent({
+      id: `${jobId}-spawned-${Date.now()}`,
+      type: 'running',
+      jobId,
+      msg: `Pipeline "${pipeline.jobName}" spawned — stage EXTRACT initiated`,
+      time: now.toISOString(),
+    });
+  }
 
   console.log(`[Simulator] Spawned new running job: ${jobId} (${pipeline.jobName}) [willFail: ${willFail}]`);
   return jobData;
@@ -287,6 +301,16 @@ const simulationTick = async () => {
           // Trigger Auto-Recovery
           triggerAutoRecovery(jobId, state.pipeline.jobName, state.pipeline.source, state.pipeline.destination);
 
+          if (typeof pushEvent === 'function') {
+            pushEvent({
+              id: `${jobId}-failed-${Date.now()}`,
+              type: 'failed',
+              jobId,
+              msg: `Pipeline "${state.pipeline.jobName}" FAILED: ${failureReason}`,
+              time: now.toISOString(),
+            });
+          }
+
           console.log(`[Simulator] Job FAILED: ${jobId} (${failureReason})`);
         } else {
           // ── JOB SUCCEEDED ───────────────────────────────────────
@@ -313,6 +337,26 @@ const simulationTick = async () => {
             jobId, jobName: state.pipeline.jobName, source: state.pipeline.source, destination: state.pipeline.destination,
             status: 'success', level: 'INFO', message: `[Simulator] Job COMPLETED successfully in ${elapsedSec}s`
           });
+
+          // Create Success Alert
+          await createAlert({
+            jobId,
+            jobName: state.pipeline.jobName,
+            type: 'success',
+            severity: 'low',
+            message: `ETL Job COMPLETED: "${state.pipeline.jobName}" finished successfully in ${elapsedSec}s (${(recordsProcessed + 5000).toLocaleString()} records processed)`,
+            emailSent: false,
+          });
+
+          if (typeof pushEvent === 'function') {
+            pushEvent({
+              id: `${jobId}-success-${Date.now()}`,
+              type: 'success',
+              jobId,
+              msg: `Pipeline "${state.pipeline.jobName}" completed successfully in ${elapsedSec}s`,
+              time: now.toISOString(),
+            });
+          }
 
           console.log(`[Simulator] Job SUCCEEDED: ${jobId} in ${elapsedSec}s`);
         }

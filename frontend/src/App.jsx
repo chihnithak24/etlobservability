@@ -9,13 +9,8 @@ import JobDetails from './pages/JobDetails';
 import Monitoring from './pages/Monitoring';
 import Analytics from './pages/Analytics';
 import Alerts from './pages/Alerts';
-import Prediction from './pages/Prediction';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
-import Logs from './pages/Logs';
-import Dags from './pages/Dags';
-import RcaPage from './pages/RcaPage';
-import RecoveryPage from './pages/RecoveryPage';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 
 const PrivateRoute = ({ children }) => {
@@ -30,22 +25,24 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-      <Route path="/dags" element={<PrivateRoute><Dags /></PrivateRoute>} />
       <Route path="/jobs" element={<PrivateRoute><Jobs /></PrivateRoute>} />
       <Route path="/jobs/:id" element={<PrivateRoute><JobDetails /></PrivateRoute>} />
-      <Route path="/pipelines" element={<PrivateRoute><Jobs /></PrivateRoute>} />
       <Route path="/monitoring" element={<PrivateRoute><Monitoring /></PrivateRoute>} />
-      <Route path="/live-monitor" element={<PrivateRoute><Monitoring /></PrivateRoute>} />
-      <Route path="/live" element={<PrivateRoute><Monitoring /></PrivateRoute>} />
-      <Route path="/monitor" element={<PrivateRoute><Monitoring /></PrivateRoute>} />
       <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
-      <Route path="/alerts" element={<PrivateRoute><Alerts /></PrivateRoute>} />
-      <Route path="/prediction" element={<PrivateRoute><Prediction /></PrivateRoute>} />
-      <Route path="/rca" element={<PrivateRoute><RcaPage /></PrivateRoute>} />
-      <Route path="/recovery" element={<PrivateRoute><RecoveryPage /></PrivateRoute>} />
-      <Route path="/logs" element={<PrivateRoute><Logs /></PrivateRoute>} />
       <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
+      <Route path="/alerts" element={<PrivateRoute><Alerts /></PrivateRoute>} />
       <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+
+      {/* Redirect legacy / duplicate URLs to primary core features */}
+      <Route path="/dags" element={<Navigate to="/jobs" replace />} />
+      <Route path="/pipelines" element={<Navigate to="/jobs" replace />} />
+      <Route path="/live-monitor" element={<Navigate to="/monitoring" replace />} />
+      <Route path="/live" element={<Navigate to="/monitoring" replace />} />
+      <Route path="/monitor" element={<Navigate to="/monitoring" replace />} />
+      <Route path="/prediction" element={<Navigate to="/analytics" replace />} />
+      <Route path="/rca" element={<Navigate to="/alerts" replace />} />
+      <Route path="/recovery" element={<Navigate to="/jobs" replace />} />
+      <Route path="/logs" element={<Navigate to="/jobs" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

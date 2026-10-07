@@ -8,7 +8,7 @@ import { TableSkeleton } from '../components/ui/Skeleton';
 import api, { airflow } from '../utils/api';
 import usePolling from '../hooks/usePolling';
 import { formatDuration, formatDate, formatNumber } from '../utils/helpers';
-import { Search, Plus, ChevronUp, ChevronDown, AlertCircle, X, GitBranch } from 'lucide-react';
+import { Search, Plus, ChevronUp, ChevronDown, AlertCircle, X, GitBranch, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const STATUSES = ['all', 'running', 'success', 'failed', 'warning', 'pending'];
@@ -191,8 +191,19 @@ export default function Jobs() {
               ) : error ? (
                 <tr>
                   <td colSpan={8} style={{ padding: 40, textAlign: 'center', color: 'var(--error)' }}>
-                    <AlertCircle size={24} style={{ marginBottom: 8 }} /><br />
-                    {error}
+                    <AlertCircle size={28} style={{ marginBottom: 8, display: 'inline-block' }} /><br />
+                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{error}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>
+                      Could not retrieve job executions. Ensure the backend server is reachable.
+                    </div>
+                    <button
+                      onClick={() => { setInitialLoad(true); setError(null); fetchJobs(); }}
+                      className="btn-secondary"
+                      style={{ fontSize: 12, padding: '6px 16px', margin: '0 auto', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    >
+                      <RefreshCw size={13} />
+                      <span>Retry Connection</span>
+                    </button>
                   </td>
                 </tr>
               ) : jobs.length === 0 ? (

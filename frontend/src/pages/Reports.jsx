@@ -1,16 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import StatusBadge from '../components/ui/StatusBadge';
 import api from '../utils/api';
+import usePolling from '../hooks/usePolling';
 import { formatDuration, formatDate, formatNumber } from '../utils/helpers';
-import { FileText, Download, AlertCircle } from 'lucide-react';
+import { FileText, Download, AlertCircle, Bell, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Reports() {
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const fetchData = useCallback(async () => {
     try {
@@ -25,10 +29,16 @@ export default function Reports() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  usePolling(fetchData, 8000);
+
+  const filteredJobs = jobs.filter(j => {
+    if (statusFilter !== 'all' && j.status !== statusFilter) return false;
+    return true;
+  });
 
   const exportCSV = () => {
     const headers = ['Job ID', 'Name', 'Source', 'Destination', 'Status', 'Start Time', 'Duration', 'Records', 'CPU%', 'Memory%', 'Retries', 'AI Risk', 'Failure Reason'];
-    const rows = jobs.map(j => [
+    const rows = filteredJobs.map(j => [
       j.jobId, `"${j.jobName}"`, j.source, j.destination, j.status,
       formatDate(j.startTime), formatDuration(j.duration), j.recordsProcessed,
       j.cpuUsage, j.memoryUsage, j.retryCount, j.aiRiskScore,
@@ -50,14 +60,19 @@ export default function Reports() {
   return (
     <Layout onRefresh={fetchData}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>Reports</h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>ETL job performance reports and exports</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>ETL job performance reports and exports (logged in & background runs)</p>
           </div>
-          <button onClick={exportCSV} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Download size={14} /> Export CSV
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={() => navigate('/alerts')} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Bell size={14} /> Alerts Center
+            </button>
+            <button onClick={exportCSV} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Download size={14} /> Export CSV
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -88,25 +103,53 @@ export default function Reports() {
 
         {/* Full Report Table */}
         <div className="card" style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FileText size={16} color="var(--primary)" />
-            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-main)' }}>Full Job Report ({jobs.length} jobs)</h3>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <FileText size={16} color="var(--primary)" />
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-main)' }}>
+                Full Job Report ({filteredJobs.length} {statusFilter !== 'all' ? statusFilter : ''} jobs)
+              </h3>
+            </div>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              {['all', 'success', 'failed', 'running'].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  style={{
+                    padding: '4px 10px', borderRadius: 4, border: 'none',
+                    fontSize: 11.5, fontWeight: statusFilter === s ? 700 : 500,
+                    background: statusFilter === s ? 'var(--primary-light)' : 'transparent',
+                    color: statusFilter === s ? 'var(--primary)' : 'var(--text-secondary)',
+                    cursor: 'pointer', textTransform: 'capitalize',
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--bg-subtle)' }}>
-                  {['Job ID', 'Name', 'Source', 'Destination', 'Status', 'Start Time', 'Duration', 'Records', 'CPU%', 'Mem%', 'Retries', 'Risk', 'Failure Reason'].map(h => (
+                  {['Job ID', 'Name', 'Source', 'Destination', 'Status', 'Start Time', 'Duration', 'Records', 'CPU%', 'Mem%', 'Retries', 'Risk', 'Failure Reason', 'Alerts'].map(h => (
                     <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {loading ? Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i}><td colSpan={13} style={{ padding: '12px 14px', background: 'var(--bg-subtle)', height: 40 }} /></tr>
-                )) : jobs.map(job => (
+                  <tr key={i}><td colSpan={14} style={{ padding: '12px 14px', background: 'var(--bg-subtle)', height: 40 }} /></tr>
+                )) : filteredJobs.map(job => (
                   <tr key={job.jobId} className="table-row">
-                    <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--primary)', fontWeight: 500 }}>{job.jobId}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--primary)', fontWeight: 600 }}>
+                      <button
+                        onClick={() => navigate(`/jobs/${job.jobId}`)}
+                        style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                      >
+                        {job.jobId}
+                      </button>
+                    </td>
                     <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--text-main)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.jobName}</td>
                     <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--text-secondary)' }}>{job.source}</td>
                     <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--text-secondary)' }}>{job.destination}</td>
@@ -119,6 +162,18 @@ export default function Reports() {
                     <td style={{ padding: '10px 14px', fontSize: 12, color: job.retryCount > 0 ? 'var(--warning)' : 'var(--text-muted)' }}>{job.retryCount}</td>
                     <td style={{ padding: '10px 14px', fontSize: 12, color: job.aiRiskScore >= 70 ? 'var(--error)' : job.aiRiskScore >= 40 ? 'var(--warning)' : 'var(--success)', fontWeight: 600 }}>{job.aiRiskScore}</td>
                     <td style={{ padding: '10px 14px', fontSize: 11, color: 'var(--error)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.failureReason || '-'}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 11 }}>
+                      <button
+                        onClick={() => navigate('/alerts')}
+                        style={{
+                          background: 'none', border: '1px solid var(--border-color)', borderRadius: 4,
+                          padding: '2px 8px', fontSize: 11, color: 'var(--text-secondary)', cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center', gap: 4
+                        }}
+                      >
+                        <Bell size={11} /> Alerts
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

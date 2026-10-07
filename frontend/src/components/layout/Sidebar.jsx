@@ -1,41 +1,18 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Briefcase, Activity, BarChart3, FileText,
-  Settings, Bell, Brain, Shield, ChevronLeft, ChevronRight, ScrollText, Info,
-  GitBranch, RefreshCw, Search
+  Settings, Bell, Shield, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useState } from 'react';
 
 const NAV = [
-  {
-    label: 'Overview',
-    items: [
-      { to: '/',           icon: LayoutDashboard, label: 'Dashboard'       },
-      { to: '/monitoring', icon: Activity,        label: 'Live Monitor', live: true },
-    ],
-  },
-  {
-    label: 'Pipelines & Jobs',
-    items: [
-      { to: '/dags',       icon: GitBranch,       label: 'DAG Workflows'   },
-      { to: '/jobs',       icon: Briefcase,       label: 'ETL Jobs'        },
-      { to: '/logs',       icon: ScrollText,      label: 'Log Viewer'      },
-    ],
-  },
-  {
-    label: 'AI & Observability',
-    items: [
-      { to: '/prediction', icon: Brain,           label: 'AI Predictions'  },
-      { to: '/alerts',     icon: Bell,            label: 'Alerts & RCA'    },
-      { to: '/analytics',  icon: BarChart3,       label: 'Analytics'       },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { to: '/settings',   icon: Settings,        label: 'Settings'        },
-    ],
-  },
+  { to: '/',           icon: LayoutDashboard, label: 'Dashboard'       },
+  { to: '/jobs',       icon: Briefcase,       label: 'Jobs'            },
+  { to: '/monitoring', icon: Activity,        label: 'Live Monitoring', live: true },
+  { to: '/analytics',  icon: BarChart3,       label: 'Basic Analytics' },
+  { to: '/reports',    icon: FileText,        label: 'Reports'         },
+  { to: '/alerts',     icon: Bell,            label: 'Alerts'          },
+  { to: '/settings',   icon: Settings,        label: 'Settings'        },
 ];
 
 export default function Sidebar() {
@@ -90,7 +67,7 @@ export default function Sidebar() {
               ETL Observability
             </div>
             <div style={{ fontSize: 10, color: 'var(--primary)', fontWeight: 700, letterSpacing: '0.04em', marginTop: 1 }}>
-              ENTERPRISE PLATFORM
+              MONITORING PLATFORM
             </div>
           </div>
         )}
@@ -102,53 +79,42 @@ export default function Sidebar() {
         padding: collapsed ? '10px 6px' : '10px 10px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 2,
+        gap: 3,
         overflowY: 'auto',
         overflowX: 'hidden',
       }}>
-        {NAV.map((group, gi) => (
-          <div key={group.label}>
-            {/* Group label */}
-            {!collapsed ? (
-              <div className="sidebar-section">{group.label}</div>
-            ) : gi > 0 ? (
-              <div style={{ height: 1, background: 'var(--border-color)', margin: '8px 4px' }} />
-            ) : <div style={{ height: 6 }} />}
+        {NAV.map(({ to, icon: Icon, label, live }) => {
+          const isActive = to === '/'
+            ? location.pathname === '/'
+            : location.pathname.startsWith(to);
 
-            {group.items.map(({ to, icon: Icon, label, live }) => {
-              const isActive = to === '/'
-                ? location.pathname === '/'
-                : location.pathname.startsWith(to);
-
-              return (
-                <div key={to} style={{ display: 'block', marginBottom: 2 }}>
-                  <NavLink
-                    to={to}
-                    end={to === '/'}
-                    className={`sidebar-item${isActive ? ' active' : ''}`}
-                    style={collapsed ? { justifyContent: 'center', padding: '8px 0' } : {}}
-                    title={collapsed ? label : undefined}
-                  >
-                    <Icon
-                      size={16}
-                      strokeWidth={isActive ? 2.3 : 1.8}
-                      color={isActive ? 'var(--primary)' : 'var(--text-secondary)'}
-                      style={{ flexShrink: 0 }}
-                    />
-                    {!collapsed && (
-                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 13 }}>
-                        {label}
-                      </span>
-                    )}
-                    {!collapsed && live && (
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', marginLeft: 'auto' }} />
-                    )}
-                  </NavLink>
-                </div>
-              );
-            })}
-          </div>
-        ))}
+          return (
+            <div key={to} style={{ display: 'block', marginBottom: 2 }}>
+              <NavLink
+                to={to}
+                end={to === '/'}
+                className={`sidebar-item${isActive ? ' active' : ''}`}
+                style={collapsed ? { justifyContent: 'center', padding: '8px 0' } : {}}
+                title={collapsed ? label : undefined}
+              >
+                <Icon
+                  size={16}
+                  strokeWidth={isActive ? 2.3 : 1.8}
+                  color={isActive ? 'var(--primary)' : 'var(--text-secondary)'}
+                  style={{ flexShrink: 0 }}
+                />
+                {!collapsed && (
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 13 }}>
+                    {label}
+                  </span>
+                )}
+                {!collapsed && live && (
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', marginLeft: 'auto' }} />
+                )}
+              </NavLink>
+            </div>
+          );
+        })}
       </nav>
 
       {/* ── Status chip ── */}

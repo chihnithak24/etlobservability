@@ -146,17 +146,16 @@ function TabBtn({ label, active, onClick, count }) {
       onClick={onClick}
       className={`tab-btn${active ? ' active' : ''}`}
     >
-      {label}
+      <span>{label}</span>
       {count !== undefined && (
         <span style={{
           fontSize: 10, padding: '1px 7px', borderRadius: 20,
-          background: active ? 'rgba(99,102,241,0.22)' : '#0d1120',
-          color: active ? '#a5b4fc' : '#2e3f57',
+          background: active ? 'var(--primary)' : 'var(--bg-subtle)',
+          color: active ? '#FFFFFF' : 'var(--text-muted)',
           fontWeight: 700,
-          border: `1px solid ${active ? 'rgba(99,102,241,0.3)' : '#1a2035'}`,
-          marginLeft: 2,
+          marginLeft: 4,
         }}>
-          {count}
+          {count.toLocaleString ? count.toLocaleString() : count}
         </span>
       )}
     </button>
@@ -164,17 +163,17 @@ function TabBtn({ label, active, onClick, count }) {
 }
 
 /* Section wrapper with title bar */
-function Section({ title, subtitle, icon: Icon, color = '#6366f1', children, action }) {
+function Section({ title, subtitle, icon: Icon, color = 'var(--primary)', children, action }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 3, height: 16, background: `linear-gradient(180deg, ${color}, ${color}80)`, borderRadius: 2, flexShrink: 0 }} />
-          <div style={{ width: 26, height: 26, background: `${color}12`, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div style={{ width: 3, height: 16, background: color, borderRadius: 2, flexShrink: 0 }} />
+          <div style={{ width: 26, height: 26, background: 'var(--primary-light)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Icon size={13} color={color} strokeWidth={1.9} />
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 700, color: '#4a5f82', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</span>
-          {subtitle && <span style={{ fontSize: 11, color: '#1e2f48', fontWeight: 500 }}>— {subtitle}</span>}
+          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{title}</span>
+          {subtitle && <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500 }}>— {subtitle}</span>}
         </div>
         {action}
       </div>
@@ -193,7 +192,7 @@ const DATE_PRESETS = [
   { label: '30d',  value: '30d' },
 ];
 
-const TABS = ['Overview', 'Trends', 'Resources', 'AI Model', 'Recovery', 'Pipeline'];
+const TABS = ['Overview', 'Trends', 'Resources'];
 
 /* ─────────────────────────────────────────────────────────────────
    Main page
@@ -357,7 +356,7 @@ export default function Analytics() {
     d.recoverySuccessRate > 60
       ? { icon: RotateCcw, color: '#34d399', text: `Auto-recovery is effective: ${d.recoverySuccessRate}% of failing jobs self-healed without manual intervention.` }
       : { icon: RotateCcw, color: '#fbbf24', text: `Recovery success rate is ${d.recoverySuccessRate}%. ${d.recoveryExhausted ?? 0} jobs exhausted all retry attempts.` },
-    { icon: Brain, color: '#a78bfa', text: `AI model achieved ${d.aiAccuracy ?? 91.4}% accuracy with ${(d.totalPredictions ?? 0).toLocaleString()} predictions processed.` },
+    { icon: Activity, color: '#a78bfa', text: `${d.running ?? 0} jobs actively executing. Metrics refresh automatically in real time.` },
   ] : [];
 
   return (
@@ -370,42 +369,46 @@ export default function Analytics() {
         <div style={{ marginBottom: 20 }}>
           {/* Title row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-              <div>
-                <h1 style={{ fontSize: 23, fontWeight: 800, color: '#000000', margin: '0 0 5px', letterSpacing: '-0.02em' }}>Analytics</h1>
-                <p style={{ color: '#3d5068', fontSize: 13.5, margin: 0, fontWeight: 500 }}>
-                  Deep-dive metrics · trends · model performance · resource analysis
-                </p>
-              </div>
+            <div>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-main)', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Basic Analytics</h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0, fontWeight: 500 }}>
+                Performance metrics · failure trends · resource utilization
+              </p>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {lastUpdated && (
-                <span style={{ fontSize: 12, color: '#4a5568' }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                   Updated {lastUpdated.toLocaleTimeString()} · refresh in {countdown}s
                 </span>
               )}
               <button
                 onClick={fetchAnalytics}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, fontSize: 13 }}
-                    className="btn-secondary"
+                className="btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5 }}
               >
-                <RefreshCw size={13} /> Refresh
+                <RefreshCw size={13} /> <span>Refresh</span>
               </button>
             </div>
           </div>
 
           {/* Filter bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', background: '#0d1120', border: '1px solid #1e2740', borderRadius: 11, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, flexWrap: 'wrap' }}>
             {/* Date range */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Calendar size={13} color="#64748b" />
-              <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Range</span>
+              <Calendar size={13} color="var(--text-muted)" />
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>Range</span>
               <div style={{ display: 'flex', gap: 4 }}>
                 {DATE_PRESETS.map(p => (
                   <button
                     key={p.value}
                     onClick={() => setDateRange(p.value)}
-                    style={{ padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                      background: dateRange === p.value ? '#6366f1' : '#2d3748',
-                      color: dateRange === p.value ? 'white' : '#94a3b8' }}
+                    style={{
+                      padding: '4px 10px', borderRadius: 5, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                      background: dateRange === p.value ? 'var(--primary)' : 'var(--bg-subtle)',
+                      color: dateRange === p.value ? 'var(--primary-text)' : 'var(--text-secondary)',
+                      border: `1px solid ${dateRange === p.value ? 'var(--primary)' : 'var(--border-color)'}`,
+                      transition: 'all 0.15s ease'
+                    }}
                   >
                     {p.label}
                   </button>
@@ -413,20 +416,24 @@ export default function Analytics() {
               </div>
             </div>
 
-            <div style={{ width: 1, height: 20, background: '#2d3748' }} />
+            <div style={{ width: 1, height: 20, background: 'var(--border-color)' }} />
 
             {/* Status filter */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Filter size={13} color="#64748b" />
-              <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Status</span>
+              <Filter size={13} color="var(--text-muted)" />
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>Status</span>
               <div style={{ display: 'flex', gap: 4 }}>
                 {['all', 'success', 'failed', 'running', 'warning'].map(s => (
                   <button
                     key={s}
                     onClick={() => setStatusFilter(s)}
-                    style={{ padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, textTransform: 'capitalize',
-                      background: statusFilter === s ? '#6366f1' : '#2d3748',
-                      color: statusFilter === s ? 'white' : '#94a3b8' }}
+                    style={{
+                      padding: '4px 10px', borderRadius: 5, cursor: 'pointer', fontSize: 12, fontWeight: 600, textTransform: 'capitalize',
+                      background: statusFilter === s ? 'var(--primary)' : 'var(--bg-subtle)',
+                      color: statusFilter === s ? 'var(--primary-text)' : 'var(--text-secondary)',
+                      border: `1px solid ${statusFilter === s ? 'var(--primary)' : 'var(--border-color)'}`,
+                      transition: 'all 0.15s ease'
+                    }}
                   >
                     {s}
                   </button>
@@ -436,55 +443,42 @@ export default function Analytics() {
 
             {/* Live indicator + Airflow sync chip */}
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-              {/* Airflow / Simulator connection status chip */}
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                background: afData?.sync?.enabled
-                  ? (afData.sync?.unreachable ? 'rgba(248,113,113,0.07)' : 'rgba(52,211,153,0.07)')
-                  : 'rgba(99,102,241,0.08)',
-                border: `1px solid ${
-                  afData?.sync?.enabled
-                    ? (afData.sync?.unreachable ? 'rgba(248,113,113,0.2)' : 'rgba(52,211,153,0.2)')
-                    : 'rgba(99,102,241,0.25)'
-                }`,
-                color: afData?.sync?.enabled
-                  ? (afData.sync?.unreachable ? '#f87171' : '#34d399')
-                  : '#818cf8',
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '4px 11px', borderRadius: 6, fontSize: 11.5, fontWeight: 600,
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-secondary)',
               }}>
-                <Wifi size={10} strokeWidth={2.2} />
-                {afData?.sync?.enabled
-                  ? (afData.sync?.unreachable
-                      ? 'Airflow offline'
-                      : `Airflow · ${afData.total ?? 0} DAG runs · ${afData.sync?.syncCount ?? 0} polls`)
-                  : 'Simulator Engine · Active'}
+                <Wifi size={11} strokeWidth={2.2} />
+                <span>{afData?.sync?.enabled ? 'Airflow API' : 'Simulator Engine'}</span>
+                <span style={{ color: 'var(--text-muted)' }}>·</span>
+                <span style={{ color: 'var(--success)', fontWeight: 700 }}>Active</span>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
               </div>
-              <span className="pulse-dot" style={{ background: !loading && !error ? '#34d399' : '#4a5568', width: 7, height: 7 }} />
-              <span style={{ fontSize: 11, color: !loading && !error ? '#34d399' : '#4a5568', fontWeight: 600 }}>LIVE</span>
             </div>
           </div>
         </div>
 
         {/* Error banner */}
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, marginBottom: 20 }}>
-            <AlertCircle size={15} color="#f87171" />
-            <span style={{ fontSize: 13, color: '#f87171', flex: 1 }}>{error}</span>
-            <button onClick={fetchAnalytics} style={{ fontSize: 12, color: '#f87171', background: 'none', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>Retry</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--error-bg)', border: '1px solid var(--error-border)', borderRadius: 8, marginBottom: 20 }}>
+            <AlertCircle size={15} color="var(--error)" />
+            <span style={{ fontSize: 13, color: 'var(--error)', flex: 1 }}>{error}</span>
+            <button onClick={fetchAnalytics} className="btn-secondary" style={{ fontSize: 12, padding: '3px 10px' }}>Retry</button>
           </div>
         )}
 
         {/* ════════════════════════════════════════════════
             TAB NAVIGATION
         ════════════════════════════════════════════════ */}
-        <div style={{ display: 'flex', gap: 2, marginBottom: 24, borderBottom: '1px solid #141c2e', paddingBottom: 0 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, borderBottom: '1px solid var(--border-color)', paddingBottom: 10, flexWrap: 'wrap' }}>
           {TABS.map(tab => (
             <TabBtn
               key={tab}
               label={tab}
               active={activeTab === tab}
               onClick={() => setActiveTab(tab)}
-              count={tab === 'AI Model' && d ? d.totalPredictions ?? undefined : undefined}
             />
           ))}
         </div>
@@ -518,9 +512,9 @@ export default function Analytics() {
                     <div key={title} className="card fade-in" style={{ padding: '16px 18px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
-                          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{title}</div>
-                          <div style={{ fontSize: 28, fontWeight: 800, color: '#000000', lineHeight: 1 }}>{value}</div>
-                          <div style={{ fontSize: 11, color: '#64748b', marginTop: 5 }}>{sub}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{title}</div>
+                          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{value}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5 }}>{sub}</div>
                         </div>
                         <div style={{ width: 40, height: 40, background: `${color}20`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <Icon size={19} color={color} />
@@ -541,9 +535,9 @@ export default function Analytics() {
                     { label: 'Avg Exec Time', value: formatDuration(d.avgDuration?.success ?? 0),     color: '#60a5fa', bg: 'rgba(96,165,250,0.07)',   sub: `Max ${formatDuration(d.maxDuration?.success ?? 0)}` },
                   ].map(({ label, value, color, bg, sub }) => (
                     <div key={label} className="card" style={{ padding: '14px 18px', borderLeft: `3px solid ${color}`, background: bg }}>
-                      <div style={{ fontSize: 11, color: '#64748b', marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
                       <div style={{ fontSize: 26, fontWeight: 800, color }}>{value}</div>
-                      <div style={{ fontSize: 11, color: '#2e3f57', marginTop: 5 }}>{sub}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 5 }}>{sub}</div>
                     </div>
                   ))}
                 </div>
@@ -561,13 +555,13 @@ export default function Analytics() {
               {/* Status donut + failure reasons */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16 }}>
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Status Distribution</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', margin: '0 0 16px' }}>Status Distribution</h3>
                   <div style={{ height: 230 }}>
                     {loading ? S(230) : <StatusDonutChart success={d.success} failed={d.failed} running={d.running} warning={d.warning} />}
                   </div>
                 </div>
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Top Failure Reasons</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-main)', margin: '0 0 16px' }}>Top Failure Reasons</h3>
                   <div style={{ height: 230 }}>{loading ? S(230) : <FailureReasonsChart data={d.topFailureReasons} />}</div>
                 </div>
               </div>
@@ -765,382 +759,6 @@ export default function Analytics() {
                   </div>
                 </div>
               </Section>
-            </>
-          )}
-
-          {/* ════════════════════════════════════════════════
-              TAB: AI MODEL
-          ════════════════════════════════════════════════ */}
-          {activeTab === 'AI Model' && (
-            <>
-              <Section title="AI Prediction Accuracy" subtitle="model performance metrics" icon={Brain} color="#a78bfa">
-                {/* Accuracy rings row */}
-                <div className="card" style={{ padding: 24 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                    <div>
-                      <h3 style={{ fontSize: 15, fontWeight: 700, color: '#000000', margin: 0 }}>Model Performance Metrics</h3>
-                      <p style={{ fontSize: 12, color: '#64748b', margin: '4px 0 0' }}>Accuracy, precision, recall, and F1 score</p>
-                    </div>
-                    <div style={{ padding: '4px 12px', borderRadius: 20, background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', fontSize: 12, color: '#a78bfa', fontWeight: 600 }}>
-                      {(d?.totalPredictions ?? 0).toLocaleString()} predictions
-                    </div>
-                  </div>
-                  {loading ? S(160) : (
-                    <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-                      <AccuracyRing pct={d.aiAccuracy ?? 91.4}  color="#a78bfa" label="Accuracy"  size={100} />
-                      <AccuracyRing pct={d.aiPrecision ?? 89.2} color="#60a5fa" label="Precision" size={100} />
-                      <AccuracyRing pct={d.aiRecall ?? 93.1}    color="#34d399" label="Recall"    size={100} />
-                      <AccuracyRing pct={d.aiF1 ?? 91.1}        color="#fbbf24" label="F1 Score"  size={100} />
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-                  {/* Bar chart */}
-                  <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Metrics Comparison</h3>
-                    <div style={{ height: 200 }}>
-                      {loading || !aiMetricsChart ? S(200) : <Bar data={aiMetricsChart} options={aiMetricsOpts} />}
-                    </div>
-                  </div>
-
-                  {/* Prediction stats */}
-                  <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Prediction Statistics</h3>
-                    {loading ? S(160) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {[
-                          { label: 'Total Predictions',  value: (d.totalPredictions ?? 0).toLocaleString(), color: '#a78bfa', Icon: Brain       },
-                          { label: 'Avg Risk Score',      value: `${d.avgPredRisk ?? 0}`,                   color: getRiskColor(d.avgPredRisk ?? 0), Icon: Target },
-                          { label: 'Avg Confidence',      value: `${d.avgPredConfidence ?? 0}%`,            color: '#60a5fa', Icon: ShieldCheck  },
-                          { label: 'High Risk Flagged',   value: (d.predicted ?? 0).toLocaleString(),       color: '#f87171', Icon: ShieldX      },
-                        ].map(({ label, value, color, Icon }) => (
-                          <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', background: '#0d1120', borderRadius: 9, border: '1px solid #1a2035' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                              <Icon size={13} color={color} />
-                              <span style={{ fontSize: 12, color: '#94a3b8' }}>{label}</span>
-                            </div>
-                            <span style={{ fontSize: 15, fontWeight: 700, color }}>{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Risk distribution donut */}
-                  <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Risk Distribution</h3>
-                    <div style={{ height: 180 }}>
-                      {loading || !riskDonut ? S(180) : <Doughnut data={riskDonut} options={DONUT_OPTS} />}
-                    </div>
-                    {d && (
-                      <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: 12 }}>
-                        {[
-                          { label: 'Stable',      val: d.riskDistribution?.stable ?? 0,      color: '#34d399' },
-                          { label: 'At Risk',     val: d.riskDistribution?.at_risk ?? 0,     color: '#fbbf24' },
-                          { label: 'Likely Fail', val: d.riskDistribution?.likely_fail ?? 0, color: '#f87171' },
-                        ].map(({ label, val, color }) => (
-                          <div key={label} style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 18, fontWeight: 700, color }}>{val}</div>
-                            <div style={{ fontSize: 11, color: '#64748b' }}>{label}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Section>
-
-              {/* Avg risk by status + high risk jobs */}
-              <Section title="Risk Score Analysis" subtitle="AI score vs actual job outcome" icon={Target} color="#f87171">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 6px' }}>Avg Risk Score by Job Status</h3>
-                    <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>Correlation of AI score vs actual outcome</p>
-                    <div style={{ height: 200 }}>
-                      {loading || !riskByStatusChart ? S(200) : <Bar data={riskByStatusChart} options={{ ...BAR_OPTS, scales: { ...BAR_OPTS.scales, y: { ...BAR_OPTS.scales.y, max: 100 } } }} />}
-                    </div>
-                  </div>
-                  <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>AI Insights</h3>
-                    {loading ? S(180) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        <Insight icon={Brain}       color="#a78bfa" text={`Model accuracy ${d.aiAccuracy ?? 91.4}% — predictions are reliable for production use.`} />
-                        <Insight icon={Target}      color="#f87171" text={`${d.predicted ?? 0} jobs flagged as high-risk. Average confidence: ${d.avgPredConfidence ?? 0}%.`} />
-                        <Insight icon={ShieldCheck} color="#34d399" text={`${d.riskDistribution?.stable ?? 0} jobs classified as stable. ${d.riskDistribution?.at_risk ?? 0} at risk.`} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* High risk jobs table */}
-                <div className="card" style={{ padding: 20 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: 0 }}>High Risk Jobs</h3>
-                      {!loading && d && (
-                        <span style={{ padding: '2px 10px', background: 'rgba(248,113,113,0.12)', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#f87171' }}>
-                          {(d.highRiskJobs || []).length} jobs
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => navigate('/prediction')}
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 7, color: '#818cf8', cursor: 'pointer', fontSize: 12 }}
-                    >
-                      <Brain size={12} /> Full AI Prediction →
-                    </button>
-                  </div>
-                  {loading ? S(140) : !d?.highRiskJobs?.length ? (
-                    <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b', fontSize: 13 }}>
-                      No high-risk jobs detected — fleet risk is healthy ✓
-                    </div>
-                  ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid #1e2535' }}>
-                            {['Job ID', 'Name', 'Status', 'Predicted', 'Risk Score', 'CPU', 'Memory', 'Retries'].map(h => (
-                              <th key={h} style={{ padding: '8px 14px', textAlign: 'left', fontSize: 11, color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {d.highRiskJobs.map(job => (
-                            <tr key={job.jobId} className="table-row" style={{ cursor: 'pointer' }} onClick={() => navigate(`/jobs/${job.jobId}`)}>
-                              <td style={{ padding: '9px 14px', fontSize: 12, color: '#6366f1', fontWeight: 600 }}>{job.jobId}</td>
-                              <td style={{ padding: '9px 14px', fontSize: 13, color: '#000000' }}>{job.jobName}</td>
-                              <td style={{ padding: '9px 14px' }}><StatusBadge status={job.status} /></td>
-                              <td style={{ padding: '9px 14px' }}><RiskBadge status={job.predictedStatus} /></td>
-                              <td style={{ padding: '9px 14px', minWidth: 120 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  <div style={{ flex: 1, height: 5, background: '#1e2535', borderRadius: 3, overflow: 'hidden', minWidth: 50 }}>
-                                    <div style={{ width: `${job.aiRiskScore || 0}%`, height: '100%', background: getRiskColor(job.aiRiskScore || 0), borderRadius: 3 }} />
-                                  </div>
-                                  <span style={{ fontSize: 13, fontWeight: 700, color: getRiskColor(job.aiRiskScore || 0), minWidth: 26 }}>{job.aiRiskScore}</span>
-                                </div>
-                              </td>
-                              <td style={{ padding: '9px 14px', fontSize: 12, color: job.cpuUsage > 80 ? '#f87171' : '#94a3b8' }}>{job.cpuUsage}%</td>
-                              <td style={{ padding: '9px 14px', fontSize: 12, color: job.memoryUsage > 80 ? '#f87171' : '#94a3b8' }}>{job.memoryUsage}%</td>
-                              <td style={{ padding: '9px 14px', fontSize: 12, color: job.retryCount > 2 ? '#fbbf24' : '#94a3b8' }}>{job.retryCount}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </Section>
-            </>
-          )}
-
-          {/* ════════════════════════════════════════════════
-              TAB: RECOVERY
-          ════════════════════════════════════════════════ */}
-          {activeTab === 'Recovery' && (
-            <>
-              <Section title="Auto Recovery Success Rate" subtitle="AI-driven retry engine performance" icon={RotateCcw} color="#34d399">
-                {/* KPI pills */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 14 }}>
-                  {loading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height={94} />) : [
-                    { label: 'Recovery Success Rate', value: `${d.recoverySuccessRate ?? 0}%`, color: '#34d399', sub: 'recovered / total',        Icon: CheckCircle },
-                    { label: 'Total Tracked',          value: d.recoveryTotal ?? 0,             color: '#a78bfa', sub: 'jobs with recovery',        Icon: Shield      },
-                    { label: 'Recovered',              value: d.recoveryRecovered ?? 0,         color: '#34d399', sub: 'successfully recovered',    Icon: CheckCircle },
-                    { label: 'Retries Exhausted',      value: d.recoveryExhausted ?? 0,         color: '#f87171', sub: 'max retries reached',       Icon: XCircle     },
-                    { label: 'Currently Recovering',   value: d.recoveryRecovering ?? 0,        color: '#60a5fa', sub: 'in-progress now',           Icon: Activity    },
-                  ].map(({ label, value, color, sub, Icon }) => (
-                    <div key={label} className="card" style={{ padding: '15px 17px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{label}</div>
-                          <div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>
-                          <div style={{ fontSize: 11, color: '#4a5568', marginTop: 4 }}>{sub}</div>
-                        </div>
-                        <div style={{ width: 36, height: 36, background: `${color}1a`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon size={17} color={color} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Section>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                {/* Recovery ring + gauge bars */}
-                <div className="card" style={{ padding: 24 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 20px' }}>Recovery Success Breakdown</h3>
-                  {loading ? S(180) : (
-                    <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-                      <AccuracyRing pct={d.recoverySuccessRate ?? 0} color="#34d399" label="Success" size={100} />
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        {[
-                          { label: 'Recovered',   value: d.recoveryRecovered  ?? 0, color: '#34d399' },
-                          { label: 'Exhausted',   value: d.recoveryExhausted  ?? 0, color: '#f87171' },
-                          { label: 'Recovering',  value: d.recoveryRecovering ?? 0, color: '#60a5fa' },
-                        ].map(({ label, value, color }) => (
-                          <div key={label}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                              <span style={{ fontSize: 12, color: '#94a3b8' }}>{label}</span>
-                              <span style={{ fontSize: 12, fontWeight: 700, color }}>{value}</span>
-                            </div>
-                            <GaugeBar value={value} max={d.recoveryTotal || 1} color={color} height={7} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Recovery donut */}
-                <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Recovery Outcome Distribution</h3>
-                  <div style={{ height: 200 }}>
-                    {loading || !recoveryDonut ? S(200) : <Doughnut data={recoveryDonut} options={DONUT_OPTS} />}
-                  </div>
-                </div>
-              </div>
-
-              {/* Recovery insights */}
-              {!loading && d && (
-                <Section title="Recovery Insights" icon={Lightbulb} color="#fbbf24">
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <Insight icon={RotateCcw} color={d.recoverySuccessRate > 60 ? '#34d399' : '#fbbf24'}
-                      text={`Auto-recovery resolved ${d.recoveryRecovered ?? 0} failures automatically — ${d.recoverySuccessRate ?? 0}% success rate.`} />
-                    <Insight icon={XCircle} color="#f87171"
-                      text={`${d.recoveryExhausted ?? 0} jobs exhausted all retry attempts. These require manual investigation.`} />
-                    <Insight icon={Activity} color="#60a5fa"
-                      text={`${d.recoveryRecovering ?? 0} jobs are currently in recovery. They will appear here once resolved.`} />
-                    <Insight icon={Zap} color="#a78bfa"
-                      text={`Recovery engine monitored ${d.recoveryTotal ?? 0} total jobs. Retry logic helps prevent cascading failures.`} />
-                  </div>
-                </Section>
-              )}
-            </>
-          )}
-
-          {/* ════════════════════════════════════════════════
-              TAB: PIPELINE
-          ════════════════════════════════════════════════ */}
-          {activeTab === 'Pipeline' && (
-            <>
-              <Section title="Pipeline Distribution" subtitle="source & destination breakdown" icon={BarChart3} color="#6366f1">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                  <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 6px' }}>Jobs by Source System</h3>
-                    <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>Volume of jobs originating from each source</p>
-                    <div style={{ height: 240 }}>{loading || !sourceChart ? S(240) : <Bar data={sourceChart} options={BAR_OPTS} />}</div>
-                  </div>
-                  <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 6px' }}>Jobs by Destination</h3>
-                    <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px' }}>Volume of jobs flowing to each destination</p>
-                    <div style={{ height: 240 }}>{loading || !destChart ? S(240) : <Bar data={destChart} options={BAR_OPTS} />}</div>
-                  </div>
-                </div>
-              </Section>
-
-              {/* Airflow top-DAGs section — only shown when Airflow analytics are available */}
-              {!loading && afData && afData.topDags?.length > 0 && (
-                <Section title="Top Airflow DAGs" subtitle="by number of recorded runs" icon={GitBranch} color="#60a5fa">
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    {/* DAG run table */}
-                    <div className="card" style={{ padding: 20 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                        <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: 0 }}>DAG Run Counts</h3>
-                        <span style={{ fontSize: 11, color: '#4a5568' }}>
-                          {afData.sync?.lastSyncAt
-                            ? `Last sync ${new Date(afData.sync.lastSyncAt).toLocaleTimeString()}`
-                            : 'No sync yet'}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                        {afData.topDags.map((dag) => {
-                          const max = afData.topDags[0]?.count || 1;
-                          const STATUS_C = { success: '#34d399', failed: '#f87171', running: '#60a5fa', warning: '#fbbf24', pending: '#7585a0' };
-                          const c = STATUS_C[dag.lastStatus] || '#7585a0';
-                          return (
-                            <div key={dag.dagId}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                <span style={{ fontSize: 12, color: '#94a3b8', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>{dag.dagId}</span>
-                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                  <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: `${c}15`, border: `1px solid ${c}30`, color: c, fontWeight: 700 }}>{dag.lastStatus}</span>
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: '#60a5fa' }}>{dag.count}</span>
-                                </div>
-                              </div>
-                              <GaugeBar value={dag.count} max={max} color={c} height={5} />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Airflow status overview */}
-                    <div className="card" style={{ padding: 20 }}>
-                      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 14px' }}>Airflow Status Overview</h3>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                        {[
-                          { label: 'Total DAG Runs', value: afData.total ?? 0,   color: '#60a5fa' },
-                          { label: 'Running',         value: afData.running ?? 0, color: '#60a5fa' },
-                          { label: 'Successful',      value: afData.success ?? 0, color: '#34d399' },
-                          { label: 'Failed',          value: afData.failed  ?? 0, color: '#f87171' },
-                          { label: 'Total Retries',   value: afData.totalRetries ?? 0, color: '#fbbf24' },
-                          { label: 'Sync Polls',      value: afData.sync?.syncCount ?? 0, color: '#a78bfa' },
-                        ].map(({ label, value, color }) => (
-                          <MetricPill key={label} label={label} value={value} color={color} />
-                        ))}
-                      </div>
-                      {afData.sync && (
-                        <div style={{ fontSize: 11, color: '#3d5070', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <span>Interval: <strong style={{ color: '#60a5fa' }}>{((afData.sync.intervalMs ?? 30000) / 1000)}s</strong></span>
-                          {afData.sync.nextSyncAt && (
-                            <span>Next sync: <strong style={{ color: '#60a5fa' }}>{new Date(afData.sync.nextSyncAt).toLocaleTimeString()}</strong></span>
-                          )}
-                          <span style={{ color: afData.sync.enabled ? '#34d399' : '#f87171', fontWeight: 700 }}>
-                            {afData.sync.enabled ? '● Polling active' : '○ Polling disabled'}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Section>
-              )}
-
-              {/* Pipeline summary stats */}
-              {!loading && d && (
-                <Section title="Pipeline Statistics" icon={Database} color="#a78bfa">
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
-                    {[
-                      { label: 'Total Records',  value: formatNumber(d.totalRecords ?? 0),   color: '#a78bfa' },
-                      { label: 'Avg Records/Job', value: formatNumber(d.avgRecords ?? 0),    color: '#6366f1' },
-                      { label: 'Unique Sources',  value: (d.sourceDistribution || []).length, color: '#60a5fa' },
-                      { label: 'Unique Destinations', value: (d.destinationDistribution || []).length, color: '#34d399' },
-                    ].map(({ label, value, color }) => (
-                      <MetricPill key={label} label={label} value={value} color={color} />
-                    ))}
-                  </div>
-
-                  {/* Source breakdown detail */}
-                  <div className="card" style={{ padding: 20 }}>
-                    <h3 style={{ fontSize: 14, fontWeight: 700, color: '#000000', margin: '0 0 16px' }}>Source Breakdown</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {(d.sourceDistribution || []).map((s, i) => {
-                        const total = d.sourceDistribution.reduce((sum, x) => sum + x.count, 0);
-                        const pct   = total > 0 ? Math.round((s.count / total) * 100) : 0;
-                        const clrs  = ['#6366f1','#60a5fa','#a78bfa','#34d399','#fbbf24','#f87171'];
-                        const c     = clrs[i % clrs.length];
-                        return (
-                          <div key={s.source}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                              <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>{s.source}</span>
-                              <span style={{ fontSize: 12, color: c, fontWeight: 700 }}>{s.count} jobs <span style={{ color: '#4a5568', fontWeight: 400 }}>({pct}%)</span></span>
-                            </div>
-                            <GaugeBar value={s.count} max={(d.sourceDistribution[0]?.count) || 1} color={c} height={7} />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </Section>
-              )}
             </>
           )}
 
